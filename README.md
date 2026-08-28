@@ -3,5 +3,5 @@ CRoute adalah sebuah aplikasi desktop yang berfungsi membandingkan emisi yang di
 
 Nama Anggota Kelompok:
   1. Ketua Kelompok : BAYU RAHMAT KURNIA
-  2. Anggota 1 : Ahmad Maulana Ibrahim
+  2. Anggota 1 : Ahmad Maulana Ibrahim - 24/539655/TK/59853
   3. Anggota 2 : Sukmawati - 24/545512/TK/60686
