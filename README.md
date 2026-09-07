@@ -7,3 +7,6 @@ Nama Anggota Kelompok:
 1. Ketua Kelompok : BAYU RAHMAT KURNIA - 24/533736/TK/59139
 2. Anggota 1 : Ahmad Maulana Ibrahim - 24/539655/TK/59853
 3. Anggota 2 : Sukmawati - 24/545512/TK/60686
+
+Class Diagram CRoute
+<img width="784" height="751" alt="image (1)" src="https://github.com/user-attachments/assets/4ebf409e-9932-4304-83bd-50c556d8edb6" />
