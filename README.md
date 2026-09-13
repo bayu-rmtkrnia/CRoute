@@ -9,4 +9,4 @@ Nama Anggota Kelompok:
 3. Anggota 2 : Sukmawati - 24/545512/TK/60686
 
 Class Diagram CRoute
-<img width="784" height="751" alt="image (1)" src="https://github.com/user-attachments/assets/4ebf409e-9932-4304-83bd-50c556d8edb6" />
+<img width="850" height="1100" alt="Class Diagram CRoute png" src="https://github.com/user-attachments/assets/6c4687c5-7e94-4453-bac3-c4bba0cd274e" />
