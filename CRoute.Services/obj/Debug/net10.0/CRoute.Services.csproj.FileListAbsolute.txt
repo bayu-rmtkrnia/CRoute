@@ -1,0 +1,17 @@
+D:\PROJECT KULIAH\CRoute\CRoute.Services\bin\Debug\net10.0\CRoute.Services.deps.json
+D:\PROJECT KULIAH\CRoute\CRoute.Services\bin\Debug\net10.0\CRoute.Services.dll
+D:\PROJECT KULIAH\CRoute\CRoute.Services\bin\Debug\net10.0\CRoute.Services.pdb
+D:\PROJECT KULIAH\CRoute\CRoute.Services\obj\Debug\net10.0\CRoute.Services.GeneratedMSBuildEditorConfig.editorconfig
+D:\PROJECT KULIAH\CRoute\CRoute.Services\obj\Debug\net10.0\CRoute.Services.AssemblyInfoInputs.cache
+D:\PROJECT KULIAH\CRoute\CRoute.Services\obj\Debug\net10.0\CRoute.Services.AssemblyInfo.cs
+D:\PROJECT KULIAH\CRoute\CRoute.Services\obj\Debug\net10.0\CRoute.Services.csproj.CoreCompileInputs.cache
+D:\PROJECT KULIAH\CRoute\CRoute.Services\obj\Debug\net10.0\CRoute.Services.sourcelink.json
+D:\PROJECT KULIAH\CRoute\CRoute.Services\obj\Debug\net10.0\CRoute.Services.dll
+D:\PROJECT KULIAH\CRoute\CRoute.Services\obj\Debug\net10.0\refint\CRoute.Services.dll
+D:\PROJECT KULIAH\CRoute\CRoute.Services\obj\Debug\net10.0\CRoute.Services.pdb
+D:\PROJECT KULIAH\CRoute\CRoute.Services\obj\Debug\net10.0\ref\CRoute.Services.dll
+D:\PROJECT KULIAH\CRoute\CRoute.Services\bin\Debug\net10.0\appsettings.json
+D:\PROJECT KULIAH\CRoute\CRoute.Services\bin\Debug\net10.0\CRoute.Core.dll
+D:\PROJECT KULIAH\CRoute\CRoute.Services\bin\Debug\net10.0\CRoute.Core.pdb
+D:\PROJECT KULIAH\CRoute\CRoute.Services\obj\Debug\net10.0\CRoute.Services.csproj.AssemblyReference.cache
+D:\PROJECT KULIAH\CRoute\CRoute.Services\obj\Debug\net10.0\CRoute.S.B7209A35.Up2Date

@@ -1,0 +1,12 @@
+D:\PROJECT KULIAH\CRoute\CRoute.Core\bin\Debug\net10.0\CRoute.Core.deps.json
+D:\PROJECT KULIAH\CRoute\CRoute.Core\bin\Debug\net10.0\CRoute.Core.dll
+D:\PROJECT KULIAH\CRoute\CRoute.Core\bin\Debug\net10.0\CRoute.Core.pdb
+D:\PROJECT KULIAH\CRoute\CRoute.Core\obj\Debug\net10.0\CRoute.Core.GeneratedMSBuildEditorConfig.editorconfig
+D:\PROJECT KULIAH\CRoute\CRoute.Core\obj\Debug\net10.0\CRoute.Core.AssemblyInfoInputs.cache
+D:\PROJECT KULIAH\CRoute\CRoute.Core\obj\Debug\net10.0\CRoute.Core.AssemblyInfo.cs
+D:\PROJECT KULIAH\CRoute\CRoute.Core\obj\Debug\net10.0\CRoute.Core.csproj.CoreCompileInputs.cache
+D:\PROJECT KULIAH\CRoute\CRoute.Core\obj\Debug\net10.0\CRoute.Core.sourcelink.json
+D:\PROJECT KULIAH\CRoute\CRoute.Core\obj\Debug\net10.0\CRoute.Core.dll
+D:\PROJECT KULIAH\CRoute\CRoute.Core\obj\Debug\net10.0\refint\CRoute.Core.dll
+D:\PROJECT KULIAH\CRoute\CRoute.Core\obj\Debug\net10.0\CRoute.Core.pdb
+D:\PROJECT KULIAH\CRoute\CRoute.Core\obj\Debug\net10.0\ref\CRoute.Core.dll

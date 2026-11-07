@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="CRoute.App/CRoute.App.csproj" />
+  <Project Path="CRoute.Core/CRoute.Core.csproj" />
+  <Project Path="CRoute.Data/CRoute.Data.csproj" />
+  <Project Path="CRoute.Services/CRoute.Services.csproj" />
+</Solution>

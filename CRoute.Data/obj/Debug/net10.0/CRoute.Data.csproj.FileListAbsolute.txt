@@ -1,0 +1,13 @@
+D:\PROJECT KULIAH\CRoute\CRoute.Data\bin\Debug\net10.0\CRoute.Data.deps.json
+D:\PROJECT KULIAH\CRoute\CRoute.Data\bin\Debug\net10.0\CRoute.Data.dll
+D:\PROJECT KULIAH\CRoute\CRoute.Data\bin\Debug\net10.0\CRoute.Data.pdb
+D:\PROJECT KULIAH\CRoute\CRoute.Data\obj\Debug\net10.0\CRoute.Data.csproj.AssemblyReference.cache
+D:\PROJECT KULIAH\CRoute\CRoute.Data\obj\Debug\net10.0\CRoute.Data.GeneratedMSBuildEditorConfig.editorconfig
+D:\PROJECT KULIAH\CRoute\CRoute.Data\obj\Debug\net10.0\CRoute.Data.AssemblyInfoInputs.cache
+D:\PROJECT KULIAH\CRoute\CRoute.Data\obj\Debug\net10.0\CRoute.Data.AssemblyInfo.cs
+D:\PROJECT KULIAH\CRoute\CRoute.Data\obj\Debug\net10.0\CRoute.Data.csproj.CoreCompileInputs.cache
+D:\PROJECT KULIAH\CRoute\CRoute.Data\obj\Debug\net10.0\CRoute.Data.sourcelink.json
+D:\PROJECT KULIAH\CRoute\CRoute.Data\obj\Debug\net10.0\CRoute.Data.dll
+D:\PROJECT KULIAH\CRoute\CRoute.Data\obj\Debug\net10.0\refint\CRoute.Data.dll
+D:\PROJECT KULIAH\CRoute\CRoute.Data\obj\Debug\net10.0\CRoute.Data.pdb
+D:\PROJECT KULIAH\CRoute\CRoute.Data\obj\Debug\net10.0\ref\CRoute.Data.dll

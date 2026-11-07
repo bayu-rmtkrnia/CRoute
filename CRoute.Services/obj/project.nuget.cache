@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "dgSpecHash": "xgvGT9iSrmA=",
+  "success": true,
+  "projectFilePath": "D:\\PROJECT KULIAH\\CRoute\\CRoute.Services\\CRoute.Services.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\tikam\\.nuget\\packages\\microsoft.extensions.configuration\\10.0.12\\microsoft.extensions.configuration.10.0.12.nupkg.sha512",
+    "C:\\Users\\tikam\\.nuget\\packages\\microsoft.extensions.configuration.abstractions\\10.0.12\\microsoft.extensions.configuration.abstractions.10.0.12.nupkg.sha512",
+    "C:\\Users\\tikam\\.nuget\\packages\\microsoft.extensions.configuration.binder\\10.0.12\\microsoft.extensions.configuration.binder.10.0.12.nupkg.sha512",
+    "C:\\Users\\tikam\\.nuget\\packages\\microsoft.extensions.configuration.fileextensions\\10.0.12\\microsoft.extensions.configuration.fileextensions.10.0.12.nupkg.sha512",
+    "C:\\Users\\tikam\\.nuget\\packages\\microsoft.extensions.configuration.json\\10.0.12\\microsoft.extensions.configuration.json.10.0.12.nupkg.sha512",
+    "C:\\Users\\tikam\\.nuget\\packages\\microsoft.extensions.fileproviders.abstractions\\10.0.12\\microsoft.extensions.fileproviders.abstractions.10.0.12.nupkg.sha512",
+    "C:\\Users\\tikam\\.nuget\\packages\\microsoft.extensions.fileproviders.physical\\10.0.12\\microsoft.extensions.fileproviders.physical.10.0.12.nupkg.sha512",
+    "C:\\Users\\tikam\\.nuget\\packages\\microsoft.extensions.filesystemglobbing\\10.0.12\\microsoft.extensions.filesystemglobbing.10.0.12.nupkg.sha512",
+    "C:\\Users\\tikam\\.nuget\\packages\\microsoft.extensions.primitives\\10.0.12\\microsoft.extensions.primitives.10.0.12.nupkg.sha512"
+  ],
+  "logs": []
+}
