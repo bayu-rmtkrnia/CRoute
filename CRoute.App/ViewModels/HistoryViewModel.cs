@@ -56,8 +56,15 @@ public partial class HistoryViewModel : ObservableObject
         if (!_dialogs.Confirm("Hapus semua riwayat perjalanan? Tindakan ini tidak bisa dibatalkan."))
             return;
 
-        _historyRepository.ClearTrips();
-        LoadTrips();
+        try
+        {
+            _historyRepository.ClearTrips();
+            LoadTrips();
+        }
+        catch (Exception ex)
+        {
+            _dialogs.ShowInfo("Gagal menghapus riwayat: " + ex.Message);
+        }
     }
 
     [RelayCommand]

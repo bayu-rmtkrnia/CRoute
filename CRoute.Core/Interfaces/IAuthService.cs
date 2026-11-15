@@ -5,6 +5,9 @@ namespace CRoute.Core.Interfaces;
 /// </summary>
 public interface IAuthService
 {
+    /// <summary>ID pengguna yang sedang login, atau <c>null</c> kalau belum login.</summary>
+    Guid? CurrentUserId { get; }
+
     /// <summary>Nama lengkap pengguna yang sedang login, atau <c>null</c> kalau belum login.</summary>
     string? CurrentUserFullName { get; }
 

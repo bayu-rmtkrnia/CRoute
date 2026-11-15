@@ -4,7 +4,7 @@ namespace CRoute.Core.Interfaces;
 
 /// <summary>
 /// Kontrak penyimpanan riwayat perjalanan. Implementasi asli nanti ada di
-/// CRoute.Data (SQLite); sebelum itu CRoute.App pakai implementasi fake.
+/// CRoute.Data (PostgreSQL); sebelum itu CRoute.App pakai implementasi fake.
 /// </summary>
 public interface ITripHistoryRepository
 {

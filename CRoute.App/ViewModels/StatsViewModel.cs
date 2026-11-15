@@ -55,9 +55,16 @@ public partial class StatsViewModel : ObservableObject
             return;
         }
 
-        _historyRepository.SetMonthlyTarget(value);
-        Refresh();
-        ShowTargetMessage("✓ Target disimpan.", isError: false);
+        try
+        {
+            _historyRepository.SetMonthlyTarget(value);
+            Refresh();
+            ShowTargetMessage("✓ Target disimpan.", isError: false);
+        }
+        catch (Exception ex)
+        {
+            ShowTargetMessage("Gagal menyimpan target: " + ex.Message, isError: true);
+        }
     }
 
     private void ShowTargetMessage(string message, bool isError)

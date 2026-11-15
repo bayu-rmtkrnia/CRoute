@@ -9,6 +9,16 @@ public class ApiSettings
     public GoogleMapsSettings GoogleMaps { get; set; } = new();
 
     public ClimatiqSettings Climatiq { get; set; } = new();
+
+    public DatabaseSettings Database { get; set; } = new();
+}
+
+/// <summary>
+/// Konfigurasi koneksi PostgreSQL (lokal maupun Supabase).
+/// </summary>
+public class DatabaseSettings
+{
+    public string ConnectionString { get; set; } = string.Empty;
 }
 
 /// <summary>

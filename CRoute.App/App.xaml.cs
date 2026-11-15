@@ -4,14 +4,16 @@ using CRoute.App.Fakes;
 using CRoute.App.Services;
 using CRoute.App.ViewModels;
 using CRoute.Core.Interfaces;
+using CRoute.Data;
+using CRoute.Services.Configuration;
 
 namespace CRoute.App;
 
 /// <summary>
 /// Composition root: semua dependency dirakit di sini lalu disuntikkan lewat
-/// constructor ViewModel. Untuk pindah ke backend asli, cukup ganti
-/// implementasi Fakes di <see cref="OnStartup"/> dengan kelas dari
-/// CRoute.Services / CRoute.Data — ViewModel dan View tidak perlu diubah.
+/// constructor ViewModel. Auth, riwayat, dan master moda memakai PostgreSQL;
+/// route dan emisi masih memakai implementasi fake sampai integrasi
+/// Google Maps/Climatiq dikerjakan.
 /// </summary>
 public partial class App : Application
 {
@@ -27,11 +29,47 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        _auth = new FakeAuthService();
+        ApiSettings settings;
+        try
+        {
+            settings = ApiSettingsLoader.Load();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(
+                "Gagal membaca appsettings.json: " + ex.Message,
+                "CRoute",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+
+            Shutdown();
+            return;
+        }
+
+        string connectionString = settings.Database.ConnectionString;
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            MessageBox.Show(
+                "Connection string database belum diatur. Isi Database:ConnectionString di appsettings.json " +
+                "atau set environment variable CROUTE_Database__ConnectionString.",
+                "CRoute",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+
+            Shutdown();
+            return;
+        }
+
+        _auth = new PostgresAuthService(connectionString);
         _routeService = new FakeRouteService();
         _emissionService = new FakeEmissionService();
-        _modes = new FakeTransportModeProvider();
-        _history = new FakeTripHistoryRepository(_modes);
+        _modes = new PostgresTransportModeProvider(connectionString);
+        _history = new PostgresTripHistoryRepository(
+            connectionString,
+            () => _auth.CurrentUserId
+                  ?? throw new InvalidOperationException("Pengguna belum login."));
+
         _dialogs = new DialogService();
         _windows = new WindowService(CreateLoginViewModel, CreateRegisterViewModel, CreateMainViewModel);
 

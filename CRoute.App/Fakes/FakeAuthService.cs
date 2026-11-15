@@ -9,14 +9,19 @@ namespace CRoute.App.Fakes;
 /// </summary>
 public class FakeAuthService : IAuthService
 {
-    private record Account(string FullName, byte[] Salt, byte[] Hash);
+    private record Account(Guid Id, string FullName, byte[] Salt, byte[] Hash);
+
+    private static readonly Guid DemoAccountId =
+        Guid.Parse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa");
 
     private readonly Dictionary<string, Account> _accounts = new(StringComparer.OrdinalIgnoreCase);
 
     public FakeAuthService()
     {
-        Register("Akun Demo", "demo", "demo123");
+        AddAccount(DemoAccountId, "Akun Demo", "demo", "demo123");
     }
+
+    public Guid? CurrentUserId { get; private set; }
 
     public string? CurrentUserFullName { get; private set; }
 
@@ -29,23 +34,30 @@ public class FakeAuthService : IAuthService
         if (!CryptographicOperations.FixedTimeEquals(attempt, account.Hash))
             return false;
 
+        CurrentUserId = account.Id;
         CurrentUserFullName = account.FullName;
         return true;
     }
 
     public bool Register(string fullName, string username, string password)
     {
-        if (_accounts.ContainsKey(username))
-            return false;
-
-        byte[] salt = RandomNumberGenerator.GetBytes(16);
-        _accounts[username] = new Account(fullName, salt, Hash(password, salt));
-        return true;
+        return AddAccount(Guid.NewGuid(), fullName, username, password);
     }
 
     public void Logout()
     {
+        CurrentUserId = null;
         CurrentUserFullName = null;
+    }
+
+    private bool AddAccount(Guid id, string fullName, string username, string password)
+    {
+        if (_accounts.ContainsKey(username))
+            return false;
+
+        byte[] salt = RandomNumberGenerator.GetBytes(16);
+        _accounts[username] = new Account(id, fullName, salt, Hash(password, salt));
+        return true;
     }
 
     private static byte[] Hash(string password, byte[] salt)

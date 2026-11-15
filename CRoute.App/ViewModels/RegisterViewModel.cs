@@ -60,9 +60,17 @@ public partial class RegisterViewModel : ObservableObject
             ErrorMessage = "Konfirmasi password tidak sama dengan password.";
             return;
         }
-        if (!_auth.Register(FullName.Trim(), Username.Trim(), Password))
+        try
         {
-            ErrorMessage = "Username sudah dipakai, coba yang lain.";
+            if (!_auth.Register(FullName.Trim(), Username.Trim(), Password))
+            {
+                ErrorMessage = "Username sudah dipakai, coba yang lain.";
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Gagal menyimpan akun ke database: " + ex.Message;
             return;
         }
 

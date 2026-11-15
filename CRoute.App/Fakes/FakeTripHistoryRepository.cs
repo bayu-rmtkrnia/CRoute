@@ -5,7 +5,7 @@ namespace CRoute.App.Fakes;
 
 /// <summary>
 /// Riwayat perjalanan di memori, diisi beberapa contoh perjalanan.
-/// Hilang saat aplikasi ditutup; versi permanennya nanti di CRoute.Data (SQLite).
+/// Hilang saat aplikasi ditutup; versi permanennya ada di CRoute.Data (PostgreSQL).
 /// </summary>
 public class FakeTripHistoryRepository : ITripHistoryRepository
 {

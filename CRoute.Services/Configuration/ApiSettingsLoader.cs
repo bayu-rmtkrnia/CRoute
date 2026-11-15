@@ -11,15 +11,17 @@ public static class ApiSettingsLoader
     public const string DefaultFileName = "appsettings.json";
 
     /// <summary>
-    /// Memuat konfigurasi dari appsettings.json di folder output aplikasi.
-    /// File yang tidak ada dianggap konfigurasi kosong, jadi aplikasi tetap
-    /// bisa jalan dengan implementasi fake selama backend belum dipakai.
+    /// Memuat konfigurasi dari appsettings.json di folder output aplikasi,
+    /// lalu appsettings.local.json (jika ada), lalu environment variable
+    /// berawalan <c>CROUTE_</c>. Contoh: <c>CROUTE_Database__ConnectionString</c>.
     /// </summary>
     public static ApiSettings Load(string? basePath = null)
     {
         var configuration = new ConfigurationBuilder()
             .SetBasePath(basePath ?? AppContext.BaseDirectory)
             .AddJsonFile(DefaultFileName, optional: true, reloadOnChange: false)
+            .AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: false)
+            .AddEnvironmentVariables("CROUTE_")
             .Build();
 
         var settings = new ApiSettings();

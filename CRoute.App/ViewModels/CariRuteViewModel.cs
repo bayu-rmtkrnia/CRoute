@@ -150,7 +150,17 @@ public partial class CariRuteViewModel : ObservableObject
         if (_pendingTrip is null)
             return;
 
-        _historyRepository.AddTrip(_pendingTrip);
+        try
+        {
+            _historyRepository.AddTrip(_pendingTrip);
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Gagal menyimpan perjalanan: " + ex.Message;
+            return;
+        }
+
+        ErrorMessage = string.Empty;
         _pendingTrip = null;
         IsSaved = true;
     }

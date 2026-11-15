@@ -37,9 +37,17 @@ public partial class LoginViewModel : ObservableObject
     {
         ErrorMessage = string.Empty;
 
-        if (!_auth.Login(Username.Trim(), Password))
+        try
         {
-            ErrorMessage = "Username atau password salah.";
+            if (!_auth.Login(Username.Trim(), Password))
+            {
+                ErrorMessage = "Username atau password salah.";
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = "Gagal terhubung ke database: " + ex.Message;
             return;
         }
 
