@@ -484,3 +484,7 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Output build (bin/obj)
+[Bb]in/
+[Oo]bj/
