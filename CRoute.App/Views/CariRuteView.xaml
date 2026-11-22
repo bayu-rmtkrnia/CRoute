@@ -1,0 +1,157 @@
+<UserControl x:Class="CRoute.App.Views.CariRuteView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:CRoute.App.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:CariRuteViewModel}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <TextBlock Text="Cek Rute" FontSize="30" FontWeight="Bold" Foreground="{StaticResource TextBrush}"/>
+            <TextBlock Text="Bandingkan emisi karbon setiap moda untuk satu perjalanan."
+                       Style="{StaticResource Muted}" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <Grid Grid.Row="1" Margin="0,22,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="340"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,20,0">
+                <Border Style="{StaticResource Card}" VerticalAlignment="Top">
+                    <StackPanel>
+                        <TextBlock Text="Lokasi asal" Style="{StaticResource Muted}" Margin="0,0,0,6"/>
+                        <TextBox Style="{StaticResource InputBox}" ToolTip="Contoh: Jl. Kaliurang, Sleman"
+                                 Text="{Binding Origin, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <TextBlock Text="Lokasi tujuan" Style="{StaticResource Muted}" Margin="0,14,0,6"/>
+                        <TextBox Style="{StaticResource InputBox}" ToolTip="Contoh: UGM, Bulaksumur"
+                                 Text="{Binding Destination, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <TextBlock Text="Moda yang dibandingkan" Style="{StaticResource Muted}" Margin="0,18,0,8"/>
+                        <ItemsControl ItemsSource="{Binding ModeOptions}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:ModeOptionViewModel}">
+                                    <ToggleButton Style="{StaticResource ChipToggle}" Margin="0,0,8,8"
+                                                  IsChecked="{Binding IsSelected}">
+                                        <TextBlock>
+                                            <Run Text="{Binding Mode.IconName, Mode=OneWay, Converter={StaticResource TransportModeIcon}}"/>
+                                            <Run Text="{Binding Mode.Name, Mode=OneWay}"/>
+                                        </TextBlock>
+                                    </ToggleButton>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource DangerBrush}"
+                                   Margin="0,6,0,0" TextWrapping="Wrap"
+                                   Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}"/>
+
+                        <Button Content="Bandingkan emisi" IsDefault="True" Style="{StaticResource PrimaryButton}"
+                                Margin="0,18,0,0" Command="{Binding HitungCommand}"/>
+                    </StackPanel>
+                </Border>
+            </ScrollViewer>
+
+            <Grid Grid.Column="1">
+                <Border Style="{StaticResource Card}" Background="{StaticResource CreamBrush}"
+                        Visibility="{Binding HasResult, Converter={StaticResource InverseBoolToVisibility}}">
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <TextBlock Text="🗺️" FontSize="64" HorizontalAlignment="Center" Opacity="0.6"/>
+                        <TextBlock Text="Belum ada hasil" FontSize="18" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextBrush}" HorizontalAlignment="Center"
+                                   Margin="0,10,0,0"/>
+                        <TextBlock Text="Isi lokasi asal dan tujuan, lalu klik Bandingkan emisi."
+                                   Style="{StaticResource Muted}" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
+
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              Visibility="{Binding HasResult, Converter={StaticResource BoolToVisibility}}">
+                    <Border Style="{StaticResource Card}">
+                        <StackPanel>
+                            <TextBlock Text="{Binding RouteSummaryText}" FontSize="20" FontWeight="Bold"
+                                       Foreground="{StaticResource TextBrush}" TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding RouteDetailText}" Style="{StaticResource Muted}" Margin="0,4,0,0"/>
+
+                            <Border Background="{StaticResource PastelHeroBrush}" CornerRadius="16"
+                                    Padding="18,14" Margin="0,18,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding RecommendationTitle}" FontSize="18" FontWeight="Bold"
+                                               Foreground="{StaticResource DeepGreenBrush}"/>
+                                    <TextBlock Text="{Binding RecommendationDetail}" Style="{StaticResource Muted}"
+                                               TextWrapping="Wrap" Margin="0,3,0,0"/>
+                                </StackPanel>
+                            </Border>
+
+                            <TextBlock Text="Perbandingan emisi per moda (kg CO₂)" Style="{StaticResource Muted}"
+                                       Margin="0,20,0,6"/>
+                            <ItemsControl ItemsSource="{Binding ComparisonRows}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:ModeComparisonRowViewModel}">
+                                        <Grid Margin="0,7">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="34"/>
+                                                <ColumnDefinition Width="96"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="86"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="{Binding Mode.IconName, Converter={StaticResource TransportModeIcon}}"
+                                                       FontSize="18" VerticalAlignment="Center"/>
+                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Mode.Name}" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextBrush}"/>
+                                                <TextBlock Text="★ terbaik" FontSize="10"
+                                                           Foreground="{StaticResource MidGreenBrush}"
+                                                           Visibility="{Binding IsBest, Converter={StaticResource BoolToVisibility}}"/>
+                                            </StackPanel>
+                                            <ProgressBar Grid.Column="2" Style="{StaticResource SoftProgress}"
+                                                         Minimum="0" Maximum="100"
+                                                         Value="{Binding Percent, Mode=OneWay}"
+                                                         Foreground="{Binding Level, Converter={StaticResource EmissionLevelToBrush}}"
+                                                         Margin="8,0" VerticalAlignment="Center"/>
+                                            <TextBlock Grid.Column="3"
+                                                       Text="{Binding Result, Converter={StaticResource EmissionResultFormatter}}"
+                                                       HorizontalAlignment="Right" VerticalAlignment="Center"
+                                                       FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,22,0,0">
+                                <Button Width="210" Command="{Binding SimpanCommand}">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+                                            <Setter Property="Content" Value="Simpan ke riwayat"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSaved}" Value="True">
+                                                    <Setter Property="Content" Value="✓ Tersimpan di riwayat"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <Button Content="Lihat riwayat" Style="{StaticResource OutlineButton}" Width="150"
+                                        Margin="12,0,0,0" Command="{Binding GoToHistoryCommand}"
+                                        Visibility="{Binding IsSaved, Converter={StaticResource BoolToVisibility}}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>
