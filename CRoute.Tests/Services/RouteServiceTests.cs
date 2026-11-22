@@ -77,6 +77,7 @@ public class RouteServiceTests
         Assert.Contains("\"origin\":{\"address\":\"Kampus\"}", handler.LastRequestBody);
         Assert.Contains("\"destination\":{\"address\":\"Stasiun\"}", handler.LastRequestBody);
         Assert.Contains("\"travelMode\":\"DRIVE\"", handler.LastRequestBody);
+        Assert.Contains("\"regionCode\":\"ID\"", handler.LastRequestBody);
     }
 
     [Fact]

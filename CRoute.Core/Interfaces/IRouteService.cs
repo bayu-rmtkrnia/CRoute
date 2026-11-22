@@ -3,8 +3,8 @@ using CRoute.Core.Models;
 namespace CRoute.Core.Interfaces;
 
 /// <summary>
-/// Kontrak penyedia data rute. Implementasi asli ada di CRoute.Services,
-/// sementara CRoute.App bisa jalan duluan dengan implementasi fake.
+/// Kontrak penyedia data rute. Implementasi Google Maps ada di CRoute.Services;
+/// CRoute.App memakai implementasi fake kalau API key belum diisi.
 /// </summary>
 public interface IRouteService
 {

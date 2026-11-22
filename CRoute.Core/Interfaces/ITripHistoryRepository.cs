@@ -3,8 +3,8 @@ using CRoute.Core.Models;
 namespace CRoute.Core.Interfaces;
 
 /// <summary>
-/// Kontrak penyimpanan riwayat perjalanan. Implementasi asli nanti ada di
-/// CRoute.Data (PostgreSQL); sebelum itu CRoute.App pakai implementasi fake.
+/// Kontrak penyimpanan riwayat perjalanan. Implementasi PostgreSQL ada di
+/// CRoute.Data; CRoute.App juga menyediakan implementasi fake untuk pengujian.
 /// </summary>
 public interface ITripHistoryRepository
 {

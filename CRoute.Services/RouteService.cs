@@ -110,7 +110,7 @@ public class RouteService : IRouteService
                 destination = new { address = destination },
                 travelMode = "DRIVE",
                 languageCode = "id",
-                regionCode = "id",
+                regionCode = "ID",
             }),
         };
 

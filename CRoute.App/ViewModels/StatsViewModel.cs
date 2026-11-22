@@ -86,7 +86,7 @@ public partial class StatsViewModel : ObservableObject
         OfTargetText = "dari target " + EmissionResultFormatter.FormatKg(history.MonthlyTargetKg, 1) +
                        " (" + percent.ToString("0", DisplayCulture.Indonesian) + "%)";
         TargetPercent = Math.Min(percent, 100);
-        StatusText = percent < 70 ? "Masih aman, pertahankan! 🎉"
+        StatusText = percent < 70 ? "Masih aman, pertahankan!"
                    : percent < 100 ? "Hampir mencapai target, pilih moda yang lebih hemat."
                    : "Target bulan ini sudah terlampaui.";
 
