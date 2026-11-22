@@ -3,4 +3,5 @@
   <Project Path="CRoute.Core/CRoute.Core.csproj" />
   <Project Path="CRoute.Data/CRoute.Data.csproj" />
   <Project Path="CRoute.Services/CRoute.Services.csproj" />
+  <Project Path="CRoute.Tests/CRoute.Tests.csproj" />
 </Solution>
