@@ -192,23 +192,6 @@ public sealed class PostgresTripHistoryRepository : ITripHistoryRepository
         command.ExecuteScalar();
     }
 
-    /// <summary>
-    /// Tambahan untuk Dashboard/Statistik yang ingin memakai agregasi SQL
-    /// tanpa memuat seluruh riwayat ke memori.
-    /// </summary>
-    public double GetMonthlyTotal()
-    {
-        using var connection = new NpgsqlConnection(_connectionString);
-        connection.Open();
-
-        using var command = new NpgsqlCommand(
-            "SELECT fn_current_month_total(@user_id)", connection);
-
-        command.Parameters.AddWithValue("user_id", UserId);
-
-        return Convert.ToDouble(command.ExecuteScalar());
-    }
-
     private double GetMonthlyTarget(NpgsqlConnection connection)
     {
         using var command = new NpgsqlCommand(
