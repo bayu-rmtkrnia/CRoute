@@ -25,9 +25,11 @@ public class DatabaseSettings
 /// Konfigurasi Google Maps. Ada DUA endpoint berbeda yang dipakai proyek ini
 /// dan keduanya saling independen — bukan pengganti satu sama lain:
 ///
-/// 1. Distance Matrix API (<see cref="DistanceMatrixBaseUrl"/>) dipanggil
+/// 1. Routes API (<see cref="RoutesBaseUrl"/>) dipanggil
 ///    <c>RouteService</c> di layer ini untuk mengisi <c>Route.DistanceKm</c>
 ///    dan <c>Route.DurationMin</c>, yang jadi dasar perhitungan emisi.
+///    (Distance Matrix API sudah legacy dan tidak bisa di-enable di project
+///    Google Cloud baru, jadi diganti Routes API.)
 /// 2. Embed API (<see cref="EmbedBaseUrl"/>) TIDAK dipanggil dari layer ini
 ///    sama sekali — outputnya halaman HTML, bukan JSON — melainkan dipasang
 ///    langsung sebagai URL di View (WebView2 atau elemen sejenis) untuk
@@ -38,8 +40,17 @@ public class GoogleMapsSettings
     /// <summary>API key yang dipakai kedua endpoint di atas.</summary>
     public string ApiKey { get; set; } = string.Empty;
 
-    /// <summary>Endpoint JSON untuk jarak dan durasi rute.</summary>
-    public string DistanceMatrixBaseUrl { get; set; } = string.Empty;
+    /// <summary>
+    /// <c>true</c> kalau <see cref="ApiKey"/> sudah diisi key asli (bukan
+    /// kosong atau teks contoh seperti <c>GANTI_DENGAN_...</c>/<c>ISI_...</c>).
+    /// </summary>
+    public bool HasApiKey =>
+        !string.IsNullOrWhiteSpace(ApiKey) &&
+        !ApiKey.StartsWith("GANTI_DENGAN", StringComparison.Ordinal) &&
+        !ApiKey.StartsWith("ISI_", StringComparison.Ordinal);
+
+    /// <summary>Endpoint JSON (Routes API computeRoutes) untuk jarak dan durasi rute.</summary>
+    public string RoutesBaseUrl { get; set; } = "https://routes.googleapis.com/directions/v2:computeRoutes";
 
     /// <summary>
     /// Base URL Embed API, disimpan di sini supaya konfigurasinya satu tempat,

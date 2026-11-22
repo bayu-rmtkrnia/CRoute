@@ -48,7 +48,7 @@ public sealed class ApiSettingsLoaderTests : IDisposable
             {
               "GoogleMaps": {
                 "ApiKey": "main-key",
-                "DistanceMatrixBaseUrl": "https://maps.test/distancematrix"
+                "RoutesBaseUrl": "https://maps.test/routes"
               },
               "Database": {
                 "ConnectionString": "Host=db.test"
@@ -59,7 +59,7 @@ public sealed class ApiSettingsLoaderTests : IDisposable
         ApiSettings settings = ApiSettingsLoader.Load(_directory);
 
         Assert.Equal("main-key", settings.GoogleMaps.ApiKey);
-        Assert.Equal("https://maps.test/distancematrix", settings.GoogleMaps.DistanceMatrixBaseUrl);
+        Assert.Equal("https://maps.test/routes", settings.GoogleMaps.RoutesBaseUrl);
         Assert.Equal("Host=db.test", settings.Database.ConnectionString);
     }
 
@@ -70,7 +70,7 @@ public sealed class ApiSettingsLoaderTests : IDisposable
             {
               "GoogleMaps": {
                 "ApiKey": "main-key",
-                "DistanceMatrixBaseUrl": "https://maps.test/distancematrix"
+                "RoutesBaseUrl": "https://maps.test/routes"
               }
             }
             """);
@@ -85,7 +85,7 @@ public sealed class ApiSettingsLoaderTests : IDisposable
         ApiSettings settings = ApiSettingsLoader.Load(_directory);
 
         Assert.Equal("local-key", settings.GoogleMaps.ApiKey);
-        Assert.Equal("https://maps.test/distancematrix", settings.GoogleMaps.DistanceMatrixBaseUrl);
+        Assert.Equal("https://maps.test/routes", settings.GoogleMaps.RoutesBaseUrl);
     }
 
     [Fact]

@@ -19,7 +19,7 @@ dan master moda disimpan di **PostgreSQL** (lokal atau Supabase).
 | Bahasa / runtime | C#, .NET 10 (`net10.0-windows` untuk App, `net10.0` untuk layer lain) |
 | MVVM | CommunityToolkit.Mvvm 8.4.2 |
 | Database | PostgreSQL (Npgsql 10.0.3, ADO.NET murni, bukan EF Core) |
-| Integrasi eksternal | Google Maps (Distance Matrix, Embed), Climatiq (faktor emisi) |
+| Integrasi eksternal | Google Maps (Routes API, Embed), Climatiq (faktor emisi) |
 
 ## 2. Struktur solusi
 
@@ -86,7 +86,7 @@ atau black box. Integrasi eksternal yang belum selesai tetap ditandai ⚠️/❌
 
 | Tipe | Peran | Status |
 |---|---|---|
-| `RouteService` | Memanggil Google Maps Distance Matrix | ⚠️ request sudah dibangun, parsing response masih TODO (mengembalikan 0) |
+| `RouteService` | Memanggil Google Maps Routes API (`computeRoutes`) | ✅ dipakai kalau API key diisi |
 | `EmissionService` | Hitung emisi lokal (`Calculate`) + `RefreshEmissionFactorAsync` ke Climatiq | ⚠️ `Calculate` ✅; refresh Climatiq ❌ (parsing TODO, belum dipanggil) |
 | `ApiSettingsLoader` | Membaca `appsettings.json`, `appsettings.local.json`, dan env `CROUTE_*` | ✅ |
 | `ApiSettings`, `GoogleMapsSettings`, `ClimatiqSettings`, `DatabaseSettings` | Model konfigurasi | ✅ |
@@ -141,7 +141,7 @@ Lihat [`docs/database/README.md`](database/README.md).
 | `IAuthService` | `PostgresAuthService` | ✅ nyata |
 | `ITransportModeProvider` | `PostgresTransportModeProvider` | ✅ nyata |
 | `ITripHistoryRepository` | `PostgresTripHistoryRepository` | ✅ nyata |
-| `IRouteService` | `FakeRouteService` | ⚠️ simulasi (jarak dari hash teks) |
+| `IRouteService` | `RouteService` (kalau `GoogleMaps:ApiKey` diisi), selain itu `FakeRouteService` | ✅ / ⚠️ simulasi tanpa key |
 | `IEmissionService` | `FakeEmissionService` | ⚠️ perhitungan lokal; `EmissionService` belum dipasang |
 | `IDialogService` | `DialogService` | ✅ |
 | `IWindowService` | `WindowService` | ✅ |
@@ -217,7 +217,7 @@ Bagian konfigurasi:
 |---|---|---|
 | `Database:ConnectionString` | Semua repository/auth PostgreSQL | ✅ |
 | `GoogleMaps:ApiKey` | `RouteService` | ⚠️ belum dipakai aplikasi |
-| `GoogleMaps:DistanceMatrixBaseUrl` | `RouteService` | ⚠️ belum dipakai aplikasi |
+| `GoogleMaps:RoutesBaseUrl` | `RouteService` | ✅ (ada nilai bawaan) |
 | `GoogleMaps:EmbedBaseUrl` | Peta di View | ❌ belum ada |
 | `Climatiq:ApiKey` | `EmissionService.RefreshEmissionFactorAsync` | ❌ belum dipanggil |
 | `Climatiq:BaseUrl` | `EmissionService.RefreshEmissionFactorAsync` | ❌ belum dipanggil |

@@ -11,13 +11,14 @@ kondisi kode saat ini, dan langkah mengganti implementasi fake dengan API nyata.
 
 | Integrasi | Dipakai di aplikasi | Status |
 |---|---|---|
-| Google Maps Distance Matrix (jarak dan durasi) | Belum. Aplikasi memakai `FakeRouteService` | ⚠️ request sudah dibangun, parsing response masih TODO (jarak 0) |
+| Google Maps Routes API (jarak dan durasi) | Ya, kalau `GoogleMaps:ApiKey` diisi. Tanpa key, otomatis jatuh ke `FakeRouteService` | ✅ |
 | Google Maps Embed (peta rute) | Belum ada di View | ❌ |
 | Climatiq (faktor emisi) | Belum. Aplikasi memakai `FakeEmissionService` | ❌ body request masih placeholder, parsing TODO, belum dipanggil |
 | Perhitungan emisi lokal (`TransportMode.CalculateEmission`) | Ya | ✅ |
 
-Akibatnya, jarak yang tampil di Cek Rute berasal dari simulasi
-(`FakeRouteService`), bukan dari Google Maps. Faktor emisi yang dipakai
+Jarak dan durasi di Cek Rute berasal dari Google Maps selama API key sudah
+diisi di `appsettings.local.json`; tanpa key, aplikasi tetap jalan dengan
+simulasi `FakeRouteService`. Faktor emisi yang dipakai
 adalah nilai tetap dari master `transport_modes` (lihat
 [`perhitungan-emisi.md`](perhitungan-emisi.md)).
 
@@ -33,7 +34,7 @@ Kredensial dan endpoint dibaca dari `CRoute.Services/appsettings.json` lewat
 | Kunci | Fungsi |
 |---|---|
 | `GoogleMaps:ApiKey` | API key Google Maps Platform |
-| `GoogleMaps:DistanceMatrixBaseUrl` | `https://maps.googleapis.com/maps/api/distancematrix/json` |
+| `GoogleMaps:RoutesBaseUrl` | `https://routes.googleapis.com/directions/v2:computeRoutes` (nilai bawaan kalau tidak diisi) |
 | `GoogleMaps:EmbedBaseUrl` | `https://www.google.com/maps/embed/v1/directions` |
 | `Climatiq:ApiKey` | API key Climatiq |
 | `Climatiq:BaseUrl` | `https://api.climatiq.io/data/v1/estimate` |
@@ -51,84 +52,81 @@ Catatan yang perlu ditindaklanjuti:
   environment variable `CROUTE_*`.
 - Jangan menulis API key asli di berkas yang di-commit.
 
-## 3. Google Maps Distance Matrix
+## 3. Google Maps Routes API (jarak dan durasi)
 
 ### 3.1 Tujuan
 
 Mengisi `Route.DistanceKm` dan `Route.DurationMin` dari dua teks (asal dan tujuan).
 Hasilnya dipakai untuk menghitung emisi setiap moda: `E = jarak × faktor`.
 
-### 3.2 Kondisi kode saat ini (`CRoute.Services/RouteService.cs`)
+### 3.2 Kenapa Routes API, bukan Distance Matrix
 
-- ✅ `EnsureConfigured()` menolak key kosong/placeholder `GANTI_DENGAN...` dan
-  `DistanceMatrixBaseUrl` kosong, dengan pesan yang menunjuk ke `appsettings.json`.
-- ✅ `BuildRequestUri()` membentuk URL dengan parameter `origins`,
-  `destinations`, dan `key`, masing-masing di-encode dengan
-  `Uri.EscapeDataString`.
-- ✅ Request dikirim dengan `HttpClient.GetAsync`, lalu `EnsureSuccessStatusCode()`.
-- ❌ `ParseRoute()` **belum diimplementasikan**. Method ini selalu mengembalikan
-  `DistanceKm = 0` dan `DurationMin = 0`. Kalau `RouteService` dipasang sekarang,
-  semua emisi akan 0 dan rekomendasi tidak berarti.
-- ❌ Status di dalam JSON belum dicek. Distance Matrix dapat mengembalikan HTTP 200
-  dengan `status` seperti `REQUEST_DENIED` atau `OVER_QUERY_LIMIT`. Kondisi ini
-  harus diubah menjadi error, bukan jarak 0.
+Distance Matrix API (Legacy) sejak Oktober 2026 tidak bisa diaktifkan di proyek
+Google Cloud baru, dan Google menyarankan migrasi ke Routes API. Tim memilih
+opsi pindah ke Routes API (`computeRoutes`), karena satu permintaan memang hanya
+butuh satu asal dan satu tujuan. Sudah diuji dengan Maps Demo Key:
+"Malioboro, Yogyakarta" → "Universitas Gadjah Mada, Yogyakarta" = 4,7 km, ±16 menit.
 
-### 3.3 Format response yang diharapkan
+### 3.3 Kondisi kode (`CRoute.Services/RouteService.cs`)
 
-Berdasarkan dokumentasi resmi Distance Matrix (diakses saat penulisan):
+- ✅ `EnsureConfigured()` menolak key kosong atau placeholder (`GANTI_DENGAN_...`,
+  `ISI_...`) lewat `GoogleMapsSettings.HasApiKey`, tanpa memanggil HTTP.
+- ✅ Request: `POST {RoutesBaseUrl}` dengan header `X-Goog-Api-Key` dan
+  `X-Goog-FieldMask: routes.distanceMeters,routes.duration` (field mask wajib).
+  Key dikirim lewat header, bukan query string, jadi tidak ikut tercatat di log URL.
+- ✅ Body: `origin.address`, `destination.address`, `travelMode: "DRIVE"`,
+  `languageCode: "id"`, `regionCode: "id"`. Tanpa `routingPreference`, sehingga
+  default `TRAFFIC_UNAWARE` dipakai dan permintaan ditagih sebagai SKU
+  **Compute Routes Essentials** (kuota gratis paling besar).
+- ✅ `ParseRoute()` membaca `routes[0].distanceMeters` (meter → km) dan
+  `routes[0].duration` (string detik seperti `"1500s"`, boleh pecahan → menit,
+  dibulatkan).
+- ✅ Diuji di `CRoute.Tests/Services/RouteServiceTests.cs`.
+
+### 3.4 Format request dan response
+
+Request:
 
 ```json
 {
-  "destination_addresses": ["..."],
-  "origin_addresses": ["..."],
-  "rows": [
-    {
-      "elements": [
-        {
-          "status": "OK",
-          "duration": { "text": "25 mins", "value": 1500 },
-          "distance": { "text": "10.2 km", "value": 10200 }
-        }
-      ]
-    }
-  ],
-  "status": "OK"
+  "origin": { "address": "Malioboro, Yogyakarta" },
+  "destination": { "address": "Universitas Gadjah Mada, Yogyakarta" },
+  "travelMode": "DRIVE",
+  "languageCode": "id",
+  "regionCode": "id"
 }
 ```
 
-Konversi yang perlu dilakukan:
+Response sukses:
 
-- `rows[0].elements[0].distance.value` (meter) → `DistanceKm = value / 1000.0`
-- `rows[0].elements[0].duration.value` (detik) → `DurationMin = value / 60`
-- Periksa `status` teratas dan `rows[0].elements[0].status` sebelum membaca nilainya.
-  Nilai `OK` menandakan sukses.
+```json
+{ "routes": [ { "distanceMeters": 4700, "duration": "929s" } ] }
+```
 
-### 3.4 Catatan penting: API ini sudah legacy
+Catatan dari dokumentasi resmi:
 
-Halaman resmi Google (diakses saat penulisan) menyatakan:
+- Kalau rute tidak ditemukan, array `routes` kosong (atau tidak dikirim).
+- Field bernilai default (0) boleh tidak dikirim, jadi field yang hilang dianggap 0.
+- Alamat yang ambigu bisa salah ditebak Google. Tulis alamat lengkap dengan nama
+  kota (mis. "Malioboro, Yogyakarta", bukan "Malioboro").
 
-> Distance Matrix API (Legacy) sejak Oktober 2026 tidak bisa diaktifkan di
-> proyek Google Cloud baru. Proyek yang sudah ada tetap didukung. Google
-> menyarankan migrasi ke Routes API.
+### 3.5 Biaya dan API key
 
-Implikasinya: jika kelompok membuat proyek Google Cloud baru, API ini mungkin
-tidak bisa diaktifkan. Pilihan yang perlu diputuskan tim:
+- SKU **Compute Routes Essentials**: gratis 10.000 permintaan per bulan, lalu
+  ± USD 5 per 1.000. Permintaan naik ke Pro/Enterprise hanya kalau memakai
+  fitur lalu lintas, >10 waypoint, motor, tol, dsb. (tidak dipakai CRoute).
+- Proyek Google Cloud biasa wajib mengaktifkan billing. Untuk pengembangan, bisa
+  memakai **Maps Demo Key** (tanpa data pembayaran, ada batas harian, berhenti
+  tanpa tagihan kalau batas habis). Tiap anggota sebaiknya membuat key sendiri.
+- Aktifkan **Routes API** (bukan Roads API) dan batasi key hanya ke API itu.
+- Simpan key di `appsettings.local.json`, jangan di `appsettings.json`.
 
-1. Tetap memakai Distance Matrix (legacy), dengan proyek Google Cloud yang sudah
-   ada. Kode yang ada tidak perlu banyak diubah.
-2. Pindah ke Routes API (Compute Route Matrix). Perlu menulis ulang
-   `BuildRequestUri`, header, dan parsing. Konfigurasi `DistanceMatrixBaseUrl`
-   juga perlu diganti.
+### 3.6 Hal yang belum diputuskan
 
-Sampai keputusan diambil, status ini tetap ⚠️.
-
-### 3.5 Hal yang belum diputuskan
-
-- **Mode perjalanan.** `BuildRequestUri` tidak mengirim parameter `mode`, sehingga
-  Google memakai default (`driving`). Desain CRoute memakai **satu jarak untuk
-  semua moda** (lihat `perhitungan-emisi.md`), jadi jarak mengemudi dipakai juga
-  untuk motor, bus, kereta, sepeda, dan jalan kaki. Ini perlu diakui sebagai
-  batasan atau diganti dengan jarak per moda.
+- **Mode perjalanan.** Request memakai `travelMode: "DRIVE"`. Desain CRoute memakai
+  **satu jarak untuk semua moda** (lihat `perhitungan-emisi.md`), jadi jarak
+  mengemudi dipakai juga untuk motor, bus, kereta, sepeda, dan jalan kaki. Ini
+  perlu diakui sebagai batasan atau diganti dengan jarak per moda.
 - **Durasi per moda.** Durasi juga hanya dari satu mode.
 
 ## 4. Google Maps Embed (peta)
@@ -198,41 +196,38 @@ Response memuat total emisi dalam kg CO₂e (`co2e`, `co2e_unit`).
 
 ## 6. Mengganti implementasi fake dengan API nyata
 
-Composition root ada di `CRoute.App/App.xaml.cs`. Saat ini `IRouteService` dan
-`IEmissionService` memakai implementasi fake. Untuk beralih, ganti dua
-inisialisasi tersebut. Contoh (sesuaikan nama variabel dengan `App.xaml.cs`):
+Composition root ada di `CRoute.App/App.xaml.cs`.
+
+- **Rute: sudah diganti.** `RouteService` dipakai kalau
+  `settings.GoogleMaps.HasApiKey` bernilai `true`; kalau belum, aplikasi memakai
+  `FakeRouteService` supaya anggota tim tanpa key tetap bisa menjalankan aplikasi.
+  `HttpClient` dibuat sekali (static, timeout 15 detik) dan dibagikan.
+- **Emisi: masih fake.** Untuk beralih ke Climatiq, ganti inisialisasi
+  `_emissionService` setelah body request dan parsing Climatiq selesai, dengan
+  memakai `HttpClient` yang sama:
 
 ```csharp
-_routeService = new RouteService(new HttpClient(), settings);
-_emissionService = new EmissionService(new HttpClient(), settings);
+_emissionService = new EmissionService(Http, settings);
 ```
 
-**Jangan lakukan ini sebelum `ParseRoute()` selesai.** Jika tidak, jarak selalu 0
-dan semua hasil emisi 0.
-
-Hal yang sebaiknya dilakukan sekaligus:
-
-- Gunakan satu `HttpClient` yang dibagikan (singleton), bukan `new HttpClient()`
-  per pemanggilan. Pola ini menghindari kehabisan socket.
-- Pastikan `CariRuteViewModel.HitungAsync` menampilkan pesan error yang jelas
-  (sudah ada: `"Gagal mengambil rute: ..."`).
-- Setelah diganti, uji dengan dua kasus: alamat valid dan key salah.
+`CariRuteViewModel.HitungAsync` menampilkan pesan error dengan awalan
+`"Gagal mengambil rute: ..."`.
 
 ## 7. Penanganan error dan keamanan
 
 | Situasi | Perilaku saat ini | Yang diharapkan |
 |---|---|---|
-| Key kosong atau placeholder | `InvalidOperationException` dengan pesan jelas | Sudah sesuai, tetapi placeholder `ISI_...` belum terdeteksi |
-| HTTP non-2xx | `EnsureSuccessStatusCode()` melempar exception | Sudah sesuai, pesan perlu ramah pengguna |
-| Distance Matrix mengembalikan `status` error dengan HTTP 200 | Belum dicek. Jarak 0 | Dilempar sebagai error |
-| Alamat tidak ditemukan (`ZERO_RESULTS`) | Belum dicek | Pesan "rute tidak ditemukan" |
+| Key kosong atau placeholder (`GANTI_DENGAN_...`/`ISI_...`) | `InvalidOperationException` dengan pesan jelas, tanpa memanggil HTTP | ✅ |
+| HTTP non-2xx (key tidak valid, API belum diaktifkan, kuota habis, server error) | `HttpRequestException` dengan `StatusCode` dan pesan ramah pengguna, ditambah `status`/`message` dari body error Google | ✅ |
+| Tidak ada koneksi atau timeout | `HttpRequestException` "Tidak bisa terhubung ke Google Maps..." / "...timeout" | ✅ |
+| Alamat tidak ditemukan (`routes` kosong) | `InvalidOperationException` "Rute ... tidak ditemukan" | ✅ |
 | Climatiq gagal | Method belum dipanggil | Fallback ke nilai lokal dengan pemberitahuan |
 
 Keamanan:
 
 - Key Google dan Climatiq terbaca dari konfigurasi. Jangan commit key asli.
-- Key Google yang dipakai di URL query bisa tercatat di log jika logging HTTP
-  diaktifkan. Hindari logging URL request.
+- Key Google dikirim lewat header `X-Goog-Api-Key`, bukan URL query, sehingga
+  tidak ikut tercatat di log URL.
 
 ## 8. Rujukan
 

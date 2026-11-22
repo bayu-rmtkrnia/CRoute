@@ -7,9 +7,9 @@ using CRoute.Services.Configuration;
 namespace CRoute.Tests.Services;
 
 /// <summary>
-/// Test kontrak untuk RouteService. Test parsing sengaja di-skip sampai Bayu
-/// mengimplementasikan ParseRoute. Setelah itu, hapus atribut Skip dan pastikan
-/// semua test lulus sebelum integrasi digabung.
+/// Test kontrak untuk RouteService (Google Maps Routes API, computeRoutes).
+/// Format respons mengikuti dokumentasi resmi:
+/// <c>{ "routes": [ { "distanceMeters": 10200, "duration": "1500s" } ] }</c>.
 /// </summary>
 public class RouteServiceTests
 {
@@ -18,39 +18,36 @@ public class RouteServiceTests
         GoogleMaps = new GoogleMapsSettings
         {
             ApiKey = apiKey,
-            DistanceMatrixBaseUrl = "https://maps.test/distancematrix/json",
+            RoutesBaseUrl = "https://maps.test/directions/v2:computeRoutes",
         },
     };
 
-    private static RouteService CreateService(string json, HttpStatusCode status = HttpStatusCode.OK)
-        => new(new HttpClient(new StubHandler(json, status)), CreateSettings());
+    private static RouteService CreateService(StubHandler handler, string apiKey = "test-key")
+        => new(new HttpClient(handler), CreateSettings(apiKey));
 
-    [Fact]
-    public async Task GetRouteAsync_KeyPlaceholder_MelemparInvalidOperationTanpaMemanggilHttp()
+    private static RouteService CreateService(string json, HttpStatusCode status = HttpStatusCode.OK)
+        => CreateService(new StubHandler(json, status));
+
+    [Theory]
+    [InlineData("GANTI_DENGAN_GOOGLE_MAPS_API_KEY")]
+    [InlineData("ISI_GOOGLE_MAPS_API_KEY_DI_SINI")]
+    [InlineData("")]
+    public async Task GetRouteAsync_KeyPlaceholder_MelemparInvalidOperationTanpaMemanggilHttp(string apiKey)
     {
         var handler = new StubHandler("{}");
-        var service = new RouteService(new HttpClient(handler), CreateSettings("GANTI_DENGAN_GOOGLE_MAPS_API_KEY"));
+        RouteService service = CreateService(handler, apiKey);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.GetRouteAsync("Kampus", "Stasiun"));
         Assert.Equal(0, handler.CallCount);
     }
 
-    [Fact(Skip = "Aktifkan setelah Bayu mengimplementasikan ParseRoute.")]
+    [Fact]
     public async Task GetRouteAsync_ResponseOk_MengembalikanJarakDanDurasi()
     {
         const string json = """
             {
-              "status": "OK",
-              "rows": [
-                {
-                  "elements": [
-                    {
-                      "status": "OK",
-                      "distance": { "text": "10.2 km", "value": 10200 },
-                      "duration": { "text": "25 mins", "value": 1500 }
-                    }
-                  ]
-                }
+              "routes": [
+                { "distanceMeters": 10200, "duration": "1500s" }
               ]
             }
             """;
@@ -59,65 +56,147 @@ public class RouteServiceTests
 
         Assert.Equal(10.2, route.DistanceKm, 10);
         Assert.Equal(25, route.DurationMin);
+        Assert.Equal("Kampus", route.Origin);
+        Assert.Equal("Stasiun", route.Destination);
     }
 
-    [Fact(Skip = "Aktifkan setelah Bayu mengimplementasikan ParseRoute.")]
-    public async Task GetRouteAsync_RequestDenied_MelemparInvalidOperation()
+    [Fact]
+    public async Task GetRouteAsync_MengirimRequestSesuaiRoutesApi()
     {
-        const string json = """
-            {
-              "status": "REQUEST_DENIED",
-              "error_message": "The provided API key is invalid."
-            }
-            """;
+        var handler = new StubHandler("""{ "routes": [ { "distanceMeters": 1000, "duration": "60s" } ] }""");
 
+        await CreateService(handler).GetRouteAsync(" Kampus ", "Stasiun");
+
+        HttpRequestMessage request = handler.LastRequest!;
+        Assert.Equal(HttpMethod.Post, request.Method);
+        Assert.Equal("https://maps.test/directions/v2:computeRoutes", request.RequestUri!.ToString());
+        Assert.Equal("test-key", request.Headers.GetValues("X-Goog-Api-Key").Single());
+        Assert.Equal("routes.distanceMeters,routes.duration", request.Headers.GetValues("X-Goog-FieldMask").Single());
+        // Key dikirim lewat header, bukan query string, supaya tidak ikut tercatat di log URL.
+        Assert.DoesNotContain("test-key", request.RequestUri.ToString());
+        Assert.Contains("\"origin\":{\"address\":\"Kampus\"}", handler.LastRequestBody);
+        Assert.Contains("\"destination\":{\"address\":\"Stasiun\"}", handler.LastRequestBody);
+        Assert.Contains("\"travelMode\":\"DRIVE\"", handler.LastRequestBody);
+    }
+
+    [Fact]
+    public async Task GetRouteAsync_DurasiPecahan_DibulatkanKeMenit()
+    {
+        const string json = """{ "routes": [ { "distanceMeters": 4700, "duration": "929.5s" } ] }""";
+
+        Route route = await CreateService(json).GetRouteAsync("Kampus", "Stasiun");
+
+        Assert.Equal(4.7, route.DistanceKm, 10);
+        Assert.Equal(15, route.DurationMin);
+    }
+
+    [Fact]
+    public async Task GetRouteAsync_FieldNolTidakDikirim_DianggapNol()
+    {
+        // Routes API tidak mengirim field yang bernilai default (0).
+        Route route = await CreateService("""{ "routes": [ {} ] }""").GetRouteAsync("Kampus", "Stasiun");
+
+        Assert.Equal(0, route.DistanceKm);
+        Assert.Equal(0, route.DurationMin);
+    }
+
+    [Theory]
+    [InlineData("{}")]
+    [InlineData("""{ "routes": [] }""")]
+    public async Task GetRouteAsync_RuteTidakDitemukan_MelemparInvalidOperation(string json)
+    {
         InvalidOperationException exception = await Assert.ThrowsAsync<InvalidOperationException>(
             () => CreateService(json).GetRouteAsync("Kampus", "Stasiun"));
 
-        Assert.Contains("REQUEST_DENIED", exception.Message);
+        Assert.Contains("tidak ditemukan", exception.Message);
     }
 
-    [Fact(Skip = "Aktifkan setelah Bayu mengimplementasikan ParseRoute.")]
-    public async Task GetRouteAsync_ZeroResults_MelemparInvalidOperation()
+    [Fact]
+    public async Task GetRouteAsync_ApiKeyTidakValid_MelemparHttpRequestDenganPesanJelas()
     {
         const string json = """
             {
-              "status": "OK",
-              "rows": [
-                {
-                  "elements": [
-                    { "status": "ZERO_RESULTS" }
-                  ]
-                }
-              ]
+              "error": {
+                "code": 400,
+                "message": "API key not valid. Please pass a valid API key.",
+                "status": "INVALID_ARGUMENT"
+              }
             }
             """;
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => CreateService(json).GetRouteAsync("Kampus", "Stasiun"));
+        HttpRequestException exception = await Assert.ThrowsAsync<HttpRequestException>(
+            () => CreateService(json, HttpStatusCode.BadRequest).GetRouteAsync("Kampus", "Stasiun"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, exception.StatusCode);
+        Assert.Contains("tidak valid", exception.Message);
+        Assert.Contains("INVALID_ARGUMENT", exception.Message);
     }
 
-    [Fact(Skip = "Aktifkan setelah Bayu mengimplementasikan ParseRoute.")]
+    [Fact]
+    public async Task GetRouteAsync_ApiBelumDiaktifkan_MelemparHttpRequest()
+    {
+        const string json = """
+            {
+              "error": {
+                "code": 403,
+                "message": "Routes API has not been used in project 123 before or it is disabled.",
+                "status": "PERMISSION_DENIED"
+              }
+            }
+            """;
+
+        HttpRequestException exception = await Assert.ThrowsAsync<HttpRequestException>(
+            () => CreateService(json, HttpStatusCode.Forbidden).GetRouteAsync("Kampus", "Stasiun"));
+
+        Assert.Equal(HttpStatusCode.Forbidden, exception.StatusCode);
+        Assert.Contains("PERMISSION_DENIED", exception.Message);
+    }
+
+    [Fact]
     public async Task GetRouteAsync_HttpError_MelemparHttpRequestException()
     {
         await Assert.ThrowsAsync<HttpRequestException>(
             () => CreateService("{}", HttpStatusCode.InternalServerError).GetRouteAsync("Kampus", "Stasiun"));
     }
 
+    [Fact]
+    public async Task GetRouteAsync_TidakAdaKoneksi_MelemparHttpRequestDenganPesanJelas()
+    {
+        var handler = new StubHandler("{}") { ThrowOnSend = new HttpRequestException("No such host is known.") };
+
+        HttpRequestException exception = await Assert.ThrowsAsync<HttpRequestException>(
+            () => CreateService(handler).GetRouteAsync("Kampus", "Stasiun"));
+
+        Assert.Contains("koneksi internet", exception.Message);
+    }
+
     private sealed class StubHandler(string json, HttpStatusCode status = HttpStatusCode.OK) : HttpMessageHandler
     {
         public int CallCount { get; private set; }
 
-        protected override Task<HttpResponseMessage> SendAsync(
+        public HttpRequestMessage? LastRequest { get; private set; }
+
+        public string LastRequestBody { get; private set; } = string.Empty;
+
+        public Exception? ThrowOnSend { get; init; }
+
+        protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
             CallCount++;
+            LastRequest = request;
+            LastRequestBody = request.Content is null
+                ? string.Empty
+                : await request.Content.ReadAsStringAsync(cancellationToken);
 
-            return Task.FromResult(new HttpResponseMessage(status)
+            if (ThrowOnSend is not null)
+                throw ThrowOnSend;
+
+            return new HttpResponseMessage(status)
             {
                 Content = new StringContent(json, Encoding.UTF8, "application/json"),
-            });
+            };
         }
     }
 }

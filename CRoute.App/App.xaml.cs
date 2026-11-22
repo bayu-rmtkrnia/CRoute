@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CRoute.App.Fakes;
@@ -5,6 +6,7 @@ using CRoute.App.Services;
 using CRoute.App.ViewModels;
 using CRoute.Core.Interfaces;
 using CRoute.Data;
+using CRoute.Services;
 using CRoute.Services.Configuration;
 
 namespace CRoute.App;
@@ -12,11 +14,15 @@ namespace CRoute.App;
 /// <summary>
 /// Composition root: semua dependency dirakit di sini lalu disuntikkan lewat
 /// constructor ViewModel. Auth, riwayat, dan master moda memakai PostgreSQL;
-/// route dan emisi masih memakai implementasi fake sampai integrasi
-/// Google Maps/Climatiq dikerjakan.
+/// rute memakai Google Maps Routes API kalau API key sudah diisi (kalau belum,
+/// jatuh ke <see cref="FakeRouteService"/>); emisi masih fake sampai
+/// integrasi Climatiq dikerjakan.
 /// </summary>
 public partial class App : Application
 {
+    /// <summary>Satu HttpClient untuk seluruh aplikasi (jangan dibuat per request).</summary>
+    private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(15) };
+
     private IAuthService _auth = null!;
     private IRouteService _routeService = null!;
     private IEmissionService _emissionService = null!;
@@ -62,7 +68,9 @@ public partial class App : Application
         }
 
         _auth = new PostgresAuthService(connectionString);
-        _routeService = new FakeRouteService();
+        _routeService = settings.GoogleMaps.HasApiKey
+            ? new RouteService(Http, settings)
+            : new FakeRouteService();
         _emissionService = new FakeEmissionService();
         _modes = new PostgresTransportModeProvider(connectionString);
         _history = new PostgresTripHistoryRepository(

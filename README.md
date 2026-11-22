@@ -4,7 +4,7 @@ CRoute adalah sebuah aplikasi desktop yang berfungsi membandingkan emisi yang di
 
 ## Ringkasan MVP
 
-- Cari rute asal–tujuan melalui Google Maps (Distance Matrix API).
+- Cari rute asal–tujuan melalui Google Maps (Routes API).
 - Hitung estimasi emisi CO₂ melalui Climatiq API.
 - Pilih dan bandingkan moda: mobil, motor, bus, kereta, sepeda, dan jalan kaki.
 - Tampilkan rekomendasi moda paling hemat emisi dan visualisasi perbandingannya.
@@ -30,7 +30,7 @@ Status implementasi setiap fitur dijelaskan di [`docs/integrasi-api.md`](docs/in
 
 - Windows 10/11 dengan [.NET 10 SDK](https://dotnet.microsoft.com/download) dan dukungan Windows Desktop.
 - PostgreSQL, lokal atau Supabase.
-- Kunci API Google Maps (Distance Matrix) dan Climatiq untuk integrasi nyata. Saat ini `App.xaml.cs` masih memakai `FakeRouteService` dan `FakeEmissionService`, jadi kunci API belum dipakai (lihat [`docs/integrasi-api.md`](docs/integrasi-api.md)).
+- Kunci API Google Maps (Routes API) di `CRoute.Services/appsettings.local.json`. Tanpa kunci, aplikasi memakai `FakeRouteService`. Climatiq belum dipakai (`FakeEmissionService`). Lihat [`docs/integrasi-api.md`](docs/integrasi-api.md).
 
 ## Database
 
