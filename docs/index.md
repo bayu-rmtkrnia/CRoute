@@ -27,7 +27,6 @@ CRoute ditujukan untuk menyelesaikan masalah tersebut dengan memberikan informas
 Aplikasi desktop yang memungkinkan pengguna memasukkan lokasi asal dan tujuan perjalanan. Aplikasi memperoleh informasi jarak atau rute melalui layanan web pihak ketiga, kemudian menghitung dan membandingkan estimasi emisi dari berbagai moda transportasi.
 
 ### Analisis Kompetitor
-**### Analisis Kompetitor**
 
 CRoute memiliki beberapa kompetitor yang memiliki fitur perencanaan perjalanan, perbandingan moda transportasi, maupun perhitungan emisi karbon. Kompetitor yang relevan dengan CRoute antara lain **ECTRACC, Google Maps, Moovit, serta layanan transportasi seperti Gojek dan Grab**.
 
