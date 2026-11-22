@@ -5,7 +5,7 @@ CRoute adalah sebuah aplikasi desktop yang berfungsi membandingkan emisi yang di
 ## Ringkasan MVP
 
 - Cari rute asal–tujuan melalui Google Maps (Routes API).
-- Hitung estimasi emisi CO₂ melalui Climatiq API.
+- Hitung estimasi emisi CO₂ dari faktor emisi master; integrasi Climatiq direncanakan.
 - Pilih dan bandingkan moda: mobil, motor, bus, kereta, sepeda, dan jalan kaki.
 - Tampilkan rekomendasi moda paling hemat emisi dan visualisasi perbandingannya.
 - Simpan riwayat perjalanan, lihat statistik, dan atur target emisi bulanan.
@@ -30,7 +30,7 @@ Status implementasi setiap fitur dijelaskan di [`docs/integrasi-api.md`](docs/in
 
 - Windows 10/11 dengan [.NET 10 SDK](https://dotnet.microsoft.com/download) dan dukungan Windows Desktop.
 - PostgreSQL, lokal atau Supabase.
-- Kunci API Google Maps (Routes API) di `CRoute.Services/appsettings.local.json`. Tanpa kunci, aplikasi memakai `FakeRouteService`. Climatiq belum dipakai (`FakeEmissionService`). Lihat [`docs/integrasi-api.md`](docs/integrasi-api.md).
+- Kunci API Google Maps (Routes API) di `CRoute.Services/appsettings.local.json` atau env `CROUTE_GoogleMaps__ApiKey`. Tanpa kunci, aplikasi memakai `FakeRouteService`. Climatiq ditunda; emisi dihitung dari faktor `transport_modes` lewat `LocalEmissionService`. Lihat [`docs/integrasi-api.md`](docs/integrasi-api.md).
 
 ## Database
 
@@ -57,8 +57,10 @@ Perencanaan database PostgreSQL beserta skrip siap pakai ada di [`docs/database`
 5. Login dengan akun demo `demo` / `demo123` (kalau seed dijalankan) atau buat akun baru lewat Register.
 
 > Saat ini auth, riwayat perjalanan, target, dan master moda memakai PostgreSQL.
-> Route dan perhitungan emisi masih memakai implementasi fake sampai integrasi
-> Google Maps/Climatiq dikerjakan.
+> Jarak dan durasi memakai Google Maps Routes API kalau `GoogleMaps:ApiKey`
+> diisi; tanpa key, aplikasi memakai `FakeRouteService`. Perhitungan emisi
+> memakai faktor lokal dari tabel `transport_modes` (`LocalEmissionService`);
+> Climatiq ditunda.
 
 ## Pengujian
 

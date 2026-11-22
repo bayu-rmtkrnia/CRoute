@@ -73,7 +73,7 @@ Rujukan lengkap ada di [`integrasi-api.md`](integrasi-api.md),
 | Placeholder `ISI_...` vs `GANTI_DENGAN...` | ✅ | Semua memakai `GANTI_DENGAN_...`; `ApiSettingsLoader` mengosongkan placeholder. |
 | Zona waktu | ✅ | `AppClock` (Asia/Jakarta) dipakai `TripHistory`, `StatsViewModel`, dan `DashboardViewModel`. |
 | `PostgresTripHistoryRepository.GetMonthlyTotal()` | ✅ | Dihapus karena tidak dipakai; agregasi memakai `TripHistory.GetMonthlyTotal()`. |
-| Proyek test | ✅ | `CRoute.Tests`: 36 lulus, 4 di-skip menunggu `ParseRoute` Bayu. |
+| Proyek test | ✅ | `CRoute.Tests`: 52 lulus, 0 di-skip. |
 | Dokumen black box | ✅ | 15 kasus; BB-01–BB-06 sudah dijalankan dan bernilai **B**. |
 
 ### Progres 22 November 2026
@@ -87,15 +87,17 @@ Rujukan lengkap ada di [`integrasi-api.md`](integrasi-api.md),
 - [x] Simpan, baca, ubah target, dan hapus semua trip berhasil lewat
       `PostgresTripHistoryRepository`. Total bulanan C# dan SQL sama
       (1,7442 kg untuk rute uji 10,2 km dengan moda Mobil).
-- [x] `CRoute.Tests` dibuat; 36 test lulus, 4 test kontrak di-skip menunggu
-      implementasi `ParseRoute` oleh Bayu. Termasuk 3 test `AppClock` untuk
-      offset WIB dan konversi batas bulan.
+- [x] `CRoute.Tests` dibuat; 52 test lulus, 0 di-skip. Termasuk test
+      `RouteService` (Routes API), 3 test `AppClock`, dan validasi password
+      `PostgresAuthService`.
 - [x] `docs/pengujian-black-box.md` dibuat dengan 15 kasus.
 - [x] Placeholder `appsettings.json` dan `appsettings.example.json` diseragamkan.
 - [x] BB-01–BB-06 dijalankan otomatis lewat Windows UI Automation dan
-      menghasilkan **B**; BB-07–BB-15 menunggu integrasi Bayu dan data riwayat.
+      menghasilkan **B**. BB-07–BB-10 menunggu API key Google Maps asli;
+      BB-11–BB-15 bisa dijalankan dengan data uji.
 - [x] Zona waktu aplikasi disamakan ke Asia/Jakarta lewat `AppClock`.
-- [ ] Integrasi `RouteService` dan `EmissionService` (Bayu).
+- [x] Integrasi `RouteService` ke Google Maps Routes API (Bayu).
+- [ ] Integrasi `EmissionService` ke Climatiq (Bayu).
 
 Catatan koneksi: session pooler `aws-0-ap-northeast-2` berhasil setelah role
 `croute` dibuat. Sebelum role itu ada, pooler mengembalikan
@@ -111,7 +113,7 @@ dengan username `croute.<project-ref>`.
 | D2 | Lokasi kredensial | `appsettings.local.json` atau env var `CROUTE_*` | Env var `CROUTE_*`, lalu disimpan permanen di scope User |
 | D3 | Zona waktu agregasi | Asia/Jakarta atau waktu lokal mesin | Asia/Jakarta, sama dengan `functions.sql` |
 | D4 | Framework test | xUnit, NUnit, atau MSTest | xUnit, paling umum untuk proyek .NET baru |
-| D5 | Cakupan unit test | Hanya Core, atau Core + Services + Data | Core + Services. Data diuji lewat black box agar tidak butuh database di CI |
+| D5 | Cakupan unit test | Hanya Core, atau Core + Services + Data | Core + Services + validasi Data tanpa koneksi. Alur database tetap diuji lewat black box |
 
 ## 5. Tahapan kerja
 
@@ -235,7 +237,8 @@ Zona waktu (D3):
 ### Tahap 4: Unit test
 
 Buat proyek `CRoute.Tests` (xUnit) yang mereferensikan `CRoute.Core` dan
-`CRoute.Services`. Data tidak diuji di unit test karena butuh database.
+`CRoute.Services`. Data hanya diuji untuk validasi yang tidak membuka koneksi
+database; alur database diuji lewat black box.
 
 - [x] `TransportMode.CalculateEmission`: contoh dari `perhitungan-emisi.md`,
       termasuk faktor 0 untuk sepeda dan jalan kaki.
@@ -244,8 +247,10 @@ Buat proyek `CRoute.Tests` (xUnit) yang mereferensikan `CRoute.Core` dan
 - [ ] `EmissionSavings.ForTrip`: belum ada unit test karena kelasnya ada di
       `CRoute.App` (di luar cakupan Core + Services). Perilakunya dicek lewat UI.
 - [x] `ApiSettingsLoader`: mengosongkan placeholder `GANTI_DENGAN_...`.
-- [ ] **Kontrak `RouteService.ParseRoute`** (dikerjakan Bayu): 4 test sudah
-      ditulis tetapi di-skip sampai `ParseRoute` selesai.
+- [x] **Kontrak `RouteService`**: request Routes API, parsing jarak/durasi,
+      error API, timeout, dan placeholder key sudah diuji.
+- [x] `PostgresAuthService.Register`: password kurang dari 6 karakter ditolak
+      sebelum koneksi database.
 - [ ] **Kontrak `EmissionService`**: `Calculate` sudah diuji; parsing `co2e` dan
       `co2e_unit` serta fallback API belum ada.
 

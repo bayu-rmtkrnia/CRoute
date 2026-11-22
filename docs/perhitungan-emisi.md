@@ -46,11 +46,12 @@ Faktor berikut disimpan di tabel `transport_modes` (seed di
   saat perjalanan disimpan. Perubahan faktor di masa depan tidak mengubah
   riwayat lama.
 
-### Pembaruan faktor dari Climatiq
+### Pembaruan faktor dari Climatiq (ditunda)
 
-`EmissionService.RefreshEmissionFactorAsync` ❌ sudah ada kerangkanya tetapi
-belum dipanggil, dan parsing response-nya masih TODO. Faktor yang dipakai
-aplikasi saat ini adalah nilai seed di atas. Detailnya ada di
+`EmissionService.RefreshEmissionFactorAsync` ❌ baru berupa kerangka, belum
+dipanggil, dan parsing response-nya masih TODO. Integrasi Climatiq **ditunda
+untuk sementara**; faktor yang dipakai aplikasi adalah nilai seed di atas,
+dibaca lewat `LocalEmissionService`. Detailnya ada di
 [`integrasi-api.md`](integrasi-api.md).
 
 ## 3. Contoh perhitungan
@@ -167,10 +168,13 @@ Catatan:
 
 ## 7. Batasan saat ini
 
-- **Jarak belum nyata.** Rute masih memakai `FakeRouteService`, yang menurunkan
-  jarak 3,0 sampai 24,9 km dari teks asal dan tujuan. Angka ini hanya simulasi.
-  Lihat [`integrasi-api.md`](integrasi-api.md). ⚠️
-- **Faktor belum diperbarui dari Climatiq.** Nilai yang dipakai adalah seed. ⚠️
+- **Jarak tergantung konfigurasi.** Jika `GoogleMaps:ApiKey` diisi, jarak dan
+  durasi berasal dari Google Maps Routes API. Tanpa key, aplikasi memakai
+  `FakeRouteService` yang menurunkan jarak 3,0 sampai 24,9 km dari teks asal dan
+  tujuan. Angka simulasi itu tidak sesuai kondisi sebenarnya. Lihat
+  [`integrasi-api.md`](integrasi-api.md). ⚠️
+- **Faktor belum diperbarui dari Climatiq (ditunda).** Nilai yang dipakai
+  adalah seed `transport_modes`. ❌
 - **Jumlah penumpang tidak diperhitungkan.** Emisi dihitung untuk satu
   orang, tanpa `passengerCount`. ❌
 - **Moda yang tidak dipilih tidak ikut dibandingkan.** Hasil hanya untuk

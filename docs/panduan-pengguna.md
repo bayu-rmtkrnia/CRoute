@@ -121,9 +121,10 @@ Setelah perhitungan selesai, panel kanan menampilkan:
 
 ### 5.4 Batasan saat ini ⚠️
 
-- **Jarak dan durasi bersifat simulasi.** Aplikasi belum memanggil Google Maps.
-  Jarak dihitung dari teks alamat dan **tidak sesuai jarak sebenarnya**. Hasil
-  emisi hanya contoh sampai integrasi selesai. Lihat [`integrasi-api.md`](integrasi-api.md).
+- **Jarak dan durasi** berasal dari Google Maps Routes API jika
+  `GoogleMaps:ApiKey` sudah diisi. Tanpa key, aplikasi memakai simulasi
+  `FakeRouteService`, sehingga jarak **tidak sesuai kondisi sebenarnya**. Lihat
+  [`integrasi-api.md`](integrasi-api.md).
 - **Peta belum tersedia.** Rute belum ditampilkan di peta.
 - **Satu jarak untuk semua moda.** Jarak yang sama dipakai untuk setiap moda.
 
@@ -161,8 +162,8 @@ Setelah perhitungan selesai, panel kanan menampilkan:
 1. Isi **Ubah target (kg CO₂ per bulan)**. Angka boleh memakai koma atau titik,
    mis. "12,5" atau "12.5".
 2. Klik **Simpan target**.
-3. Pesan konfirmasi muncul di bawah tombol. Jika angka tidak valid (negatif atau
-   bukan angka), pesan kesalahan akan muncul.
+3. Pesan konfirmasi muncul di bawah tombol. Jika angka tidak valid (negatif,
+   nol, atau bukan angka), pesan kesalahan akan muncul.
 
 ### 7.3 Ringkasan dan grafik
 
@@ -175,9 +176,9 @@ Setelah perhitungan selesai, panel kanan menampilkan:
 
 | Fitur | Status | Keterangan |
 |---|---|---|
-| Jarak dan durasi nyata dari Google Maps | ❌ | Masih simulasi (`FakeRouteService`) |
+| Jarak dan durasi nyata dari Google Maps | ✅/⚠️ | Routes API dipakai jika API key diisi; tanpa key memakai simulasi `FakeRouteService` |
 | Peta rute | ❌ | Belum ada di Cek Rute |
-| Faktor emisi terbaru dari Climatiq | ❌ | Memakai nilai tetap dari master moda |
+| Faktor emisi terbaru dari Climatiq (ditunda) | ❌ | Memakai nilai tetap dari master moda |
 | Jumlah penumpang | ❌ | Belum ada. Emisi dihitung per kendaraan |
 | Perhitungan bulanan langsung dari database | ⚠️ | Fungsi SQL sudah tersedia, belum dipakai aplikasi |
 
