@@ -306,6 +306,32 @@ Console.WriteLine(await cmd.ExecuteScalarAsync()); // harus 6
 Kalau berhasil, lanjutkan implementasi repository sesuai
 `docs/database/csharp-functions.md`, lalu ganti fake di `App.xaml.cs`.
 
+### Hasil verifikasi 22 November 2026
+
+| Item | Hasil |
+|---|---|
+| Koneksi | Direct `db.<project-ref>.supabase.co` lewat IPv6 berhasil |
+| User aplikasi | Role `croute` dibuat dan grant diberikan |
+| Tabel `public` | 6: `users`, `settings`, `transport_modes`, `routes`, `trips`, `emission_results` |
+| Function | 19 function `fn_*` |
+| Moda transportasi | 6 sesuai seed |
+| Akun demo | `demo` / `demo123` berhasil login |
+| Target awal | 15,00 kg |
+
+Catatan:
+
+- Session pooler `aws-0-ap-northeast-2.pooler.supabase.com` dengan username
+  `croute.<project-ref>` berhasil **setelah role `croute` dibuat**. Sebelum role
+  itu ada, pooler mengembalikan `tenant/user ... not found`. Jadi pesan tersebut
+  bisa berarti role belum ada, bukan hanya project hilang. Direct connection
+  `db.<project-ref>.supabase.co` juga berhasil lewat IPv6.
+- Host `aws-1-ap-northeast-2.pooler.supabase.com` tidak dipakai karena project
+  ini terdaftar di pooler `aws-0`.
+- Password role `croute` saat ini sama dengan password `postgres`. Ganti dengan
+  password terpisah sebelum dipakai bersama.
+- Akun `ibrahim119920` ada di database, bukan bagian dari seed `schema.sql`.
+  Jangan dihapus tanpa konfirmasi pemiliknya.
+
 ---
 
 ## 8. Catatan EF Core + Supabase
