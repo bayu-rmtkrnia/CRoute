@@ -89,6 +89,7 @@ public partial class CariRuteViewModel : ObservableObject
     private async Task HitungAsync()
     {
         ErrorMessage = string.Empty;
+        ResetResult();
 
         string origin = Origin.Trim();
         string destination = Destination.Trim();
@@ -139,6 +140,24 @@ public partial class CariRuteViewModel : ObservableObject
         _pendingTrip = trip;
         IsSaved = false;
         HasResult = true;
+        SimpanCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// Menghapus hasil lama sebelum percobaan baru. Tanpa ini, hasil rute yang
+    /// sukses sebelumnya tetap tampil dan tombol simpan masih aktif walaupun
+    /// pencarian berikutnya gagal.
+    /// </summary>
+    private void ResetResult()
+    {
+        _pendingTrip = null;
+        IsSaved = false;
+        HasResult = false;
+        RouteSummaryText = string.Empty;
+        RouteDetailText = string.Empty;
+        RecommendationTitle = string.Empty;
+        RecommendationDetail = string.Empty;
+        ComparisonRows = [];
         SimpanCommand.NotifyCanExecuteChanged();
     }
 

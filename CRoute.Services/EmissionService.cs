@@ -66,9 +66,13 @@ public class EmissionService : IEmissionService
 
     private void EnsureConfigured()
     {
-        if (string.IsNullOrWhiteSpace(_settings.ApiKey) || _settings.ApiKey.StartsWith("GANTI_DENGAN", StringComparison.Ordinal))
+        if (string.IsNullOrWhiteSpace(_settings.ApiKey) ||
+            _settings.ApiKey.StartsWith("GANTI_DENGAN", StringComparison.Ordinal) ||
+            _settings.ApiKey.StartsWith("ISI_", StringComparison.Ordinal))
+        {
             throw new InvalidOperationException(
                 "Climatiq API key belum diisi. Isi Climatiq:ApiKey di appsettings.json.");
+        }
 
         if (string.IsNullOrWhiteSpace(_settings.BaseUrl))
             throw new InvalidOperationException(

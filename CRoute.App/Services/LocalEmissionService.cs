@@ -1,12 +1,14 @@
 using CRoute.Core.Interfaces;
 using CRoute.Core.Models;
 
-namespace CRoute.App.Fakes;
+namespace CRoute.App.Services;
 
 /// <summary>
-/// Perhitungan emisi lokal murni dari <see cref="TransportMode.EmissionFactor"/>.
+/// Perhitungan emisi lokal dari <see cref="TransportMode.EmissionFactor"/>.
+/// Faktor berasal dari tabel <c>transport_modes</c>; integrasi Climatiq ditunda,
+/// jadi kelas ini adalah implementasi produksi saat ini.
 /// </summary>
-public class FakeEmissionService : IEmissionService
+public class LocalEmissionService : IEmissionService
 {
     public EmissionResult Calculate(Route route, TransportMode mode)
     {

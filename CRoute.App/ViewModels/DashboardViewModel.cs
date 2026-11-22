@@ -43,8 +43,8 @@ public partial class DashboardViewModel : ObservableObject
                        EmissionResultFormatter.FormatKg(history.MonthlyTargetKg, 1) + " terpakai (" +
                        percent.ToString("0", DisplayCulture.Indonesian) + "%)";
         TargetStatus = percent < 70 ? "Masih aman, pertahankan!"
-                     : percent < 100 ? "Hampir mencapai target bulan ini"
-                     : "Target bulan ini sudah terlampaui";
+                     : percent < 100 ? "Hampir mencapai target, pilih moda yang lebih hemat."
+                     : "Target bulan ini sudah terlampaui.";
 
         RecentTrips = history.Trips
             .OrderByDescending(t => t.TripDate)

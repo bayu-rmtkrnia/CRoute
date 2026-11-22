@@ -1,8 +1,9 @@
 # Integrasi API Eksternal
 
 Dokumen ini menjelaskan integrasi CRoute dengan layanan pihak ketiga: Google
-Maps (jarak dan peta) dan Climatiq (faktor emisi). Isinya mencakup konfigurasi,
-kondisi kode saat ini, dan langkah mengganti implementasi fake dengan API nyata.
+Maps (jarak dan peta) dan Climatiq (faktor emisi, ditunda). Isinya mencakup
+konfigurasi, kondisi kode saat ini, dan langkah mengganti implementasi simulasi
+dengan API nyata.
 
 > **Legenda status**
 > ✅ Sudah berjalan · ⚠️ Sebagian (ada, tapi belum lengkap/belum real) · ❌ Belum
@@ -13,8 +14,8 @@ kondisi kode saat ini, dan langkah mengganti implementasi fake dengan API nyata.
 |---|---|---|
 | Google Maps Routes API (jarak dan durasi) | Ya, kalau `GoogleMaps:ApiKey` diisi. Tanpa key, otomatis jatuh ke `FakeRouteService` | ✅ |
 | Google Maps Embed (peta rute) | Belum ada di View | ❌ |
-| Climatiq (faktor emisi) | Belum. Aplikasi memakai `FakeEmissionService` | ❌ body request masih placeholder, parsing TODO, belum dipanggil |
-| Perhitungan emisi lokal (`TransportMode.CalculateEmission`) | Ya | ✅ |
+| Climatiq (faktor emisi) | Belum, **ditunda**. Aplikasi memakai `LocalEmissionService` dengan faktor dari `transport_modes` | ❌ ditunda; body request masih placeholder dan parsing belum ada |
+| Perhitungan emisi lokal (`LocalEmissionService` + `TransportMode.CalculateEmission`) | Ya | ✅ |
 
 Jarak dan durasi di Cek Rute berasal dari Google Maps selama API key sudah
 diisi di `appsettings.local.json`; tanpa key, aplikasi tetap jalan dengan
@@ -136,25 +137,29 @@ Catatan dari dokumentasi resmi:
   `CRoute.App`, tetapi belum ada kontrol WebView2 di `CariRuteView`.
 - Rencana: menampilkan peta rute di Cek Rute. Parameter URL dan key perlu
   diverifikasi sebelum implementasi, karena Embed API juga membutuhkan API key.
-- Embed dan Distance Matrix adalah dua layanan terpisah. Keduanya memakai
+- Embed dan Routes API adalah dua layanan terpisah. Keduanya memakai
   kunci Google Maps Platform, tetapi konfigurasi dan kodenya independen.
 
 ## 5. Climatiq (faktor emisi)
 
-### 5.1 Tujuan
+### 5.1 Tujuan dan keputusan
 
 Mengambil faktor emisi resmi untuk tiap moda, sebagai pengganti nilai tetap di
-master `transport_modes`. Saat ini nilai tetap tersebut berasal dari Modul 2.
+master `transport_modes`. **Integrasi ini ditunda untuk sementara.** Faktor yang
+dipakai saat ini berasal dari tabel `transport_modes` (seed Modul 2) dan
+dihitung oleh `LocalEmissionService` di `CRoute.App/Services`.
 
-### 5.2 Kondisi kode saat ini (`CRoute.Services/EmissionService.cs`)
+### 5.2 Kondisi kode saat ini
 
-- ✅ `Calculate(route, mode)` menghitung emisi secara lokal dan tidak memanggil
-  API. Method ini dipakai untuk semua perhitungan saat ini.
-- ⚠️ `RefreshEmissionFactorAsync(mode)` sudah membentuk request `POST` dengan header
-  `Authorization: Bearer <key>`, tetapi:
-  - **Body request salah.** Kodenya mengirim `{ "mode": "<nama moda>" }`. Climatiq
-    tidak menerima format ini, sehingga request akan gagal.
-  - **Parsing response belum ada** (`TODO`). Hasil API dibaca lalu dibuang.
+- ✅ `LocalEmissionService.Calculate(route, mode)` menghitung emisi dari
+  `TransportMode.EmissionFactor` dan tidak memanggil API. Kelas inilah yang
+  dipasang di `App.xaml.cs`.
+- ❌ `EmissionService` (kerangka Climatiq) **tidak dipasang** di aplikasi.
+  `Calculate` di kelas itu hanya placeholder lokal, sedangkan
+  `RefreshEmissionFactorAsync` belum selesai:
+  - **Body request masih placeholder.** Kodenya mengirim `{ "mode": "<nama moda>" }`;
+    format itu belum sesuai Climatiq.
+  - **Parsing response belum ada** (`TODO`).
   - **Method belum dipanggil** dari mana pun.
 
 ### 5.3 Format request menurut Climatiq
@@ -202,9 +207,10 @@ Composition root ada di `CRoute.App/App.xaml.cs`.
   `settings.GoogleMaps.HasApiKey` bernilai `true`; kalau belum, aplikasi memakai
   `FakeRouteService` supaya anggota tim tanpa key tetap bisa menjalankan aplikasi.
   `HttpClient` dibuat sekali (static, timeout 15 detik) dan dibagikan.
-- **Emisi: masih fake.** Untuk beralih ke Climatiq, ganti inisialisasi
-  `_emissionService` setelah body request dan parsing Climatiq selesai, dengan
-  memakai `HttpClient` yang sama:
+- **Emisi: dihitung lokal.** `LocalEmissionService` memakai faktor dari tabel
+  `transport_modes`. Kalau Climatiq diaktifkan nanti, ganti inisialisasi
+  `_emissionService` setelah body request dan parsing selesai, dengan memakai
+  `HttpClient` yang sama:
 
 ```csharp
 _emissionService = new EmissionService(Http, settings);

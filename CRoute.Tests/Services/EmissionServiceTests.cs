@@ -32,14 +32,16 @@ public class EmissionServiceTests
         Assert.Equal("Mobil", result.Mode.Name);
     }
 
-    [Fact]
-    public async Task RefreshEmissionFactor_KeyPlaceholder_MelemparInvalidOperation()
+    [Theory]
+    [InlineData("GANTI_DENGAN_CLIMATIQ_API_KEY")]
+    [InlineData("ISI_CLIMATIQ_API_KEY_DI_SINI")]
+    public async Task RefreshEmissionFactor_KeyPlaceholder_MelemparInvalidOperation(string apiKey)
     {
         var settings = new ApiSettings
         {
             Climatiq = new ClimatiqSettings
             {
-                ApiKey = "GANTI_DENGAN_CLIMATIQ_API_KEY",
+                ApiKey = apiKey,
                 BaseUrl = "https://api.test/estimate",
             },
         };

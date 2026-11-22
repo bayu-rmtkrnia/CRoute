@@ -19,13 +19,13 @@ aplikasi bisa dijalankan dengan database dan integrasi API yang berlaku.
 |---|---|
 | Tanggal pengujian | 22 November 2026 |
 | Penguji | Ahmad Maulana Ibrahim (otomatis lewat Windows UI Automation) |
-| Commit yang diuji | `7947766` (branch `dev`) + perubahan lokal 22 November 2026 yang belum di-commit |
+| Commit yang diuji | `7947766` untuk BB-01–BB-06. Kode sekarang `89f6ed8` + perbaikan lokal, belum diuji ulang penuh |
 | Sistem operasi | Windows 11 25H2 (10.0.26200) |
 | Versi .NET | SDK 10.0.402, runtime 10.0.13 |
 | Database | Supabase PostgreSQL 17.11 |
-| Integrasi Google Maps | Belum (`FakeRouteService`) |
-| Integrasi Climatiq | Belum (`FakeEmissionService`) |
-| Akun yang dipakai | `demo` / `demo123` |
+| Integrasi Google Maps | Routes API aktif; API key sudah tersedia di env User mesin uji. BB-07–BB-10 belum dijalankan |
+| Integrasi Climatiq | Ditunda; perhitungan memakai `LocalEmissionService` dari faktor `transport_modes` |
+| Akun yang dipakai | `demo` / `demo123` (akun ini masih bersih, 0 trip) |
 
 ## 2. Daftar kasus
 
@@ -37,10 +37,10 @@ aplikasi bisa dijalankan dengan database dan integrasi API yang berlaku.
 | BB-04 | Register | - | Buka **Register**, isi password kurang dari 6 karakter | Username baru, password `123`, konfirmasi `123` | Pesan "Password minimal 6 karakter." | Pesan "Password minimal 6 karakter." tampil. | B |
 | BB-05 | Register | - | Buka **Register**, isi konfirmasi berbeda | Password `rahasia1`, konfirmasi `rahasia2` | Pesan "Konfirmasi password tidak sama dengan password." | Pesan "Konfirmasi password tidak sama dengan password." tampil. | B |
 | BB-06 | Cek Rute | Sudah login | Buka menu **Cek Rute**, isi asal dan tujuan sama, klik **Bandingkan emisi** | `Kampus` dan `Kampus` | Pesan "Lokasi asal dan tujuan tidak boleh sama." dan tidak ada hasil | Pesan "Lokasi asal dan tujuan tidak boleh sama." tampil; panel "Belum ada hasil" tetap dan tabel perbandingan tidak muncul. | B |
-| BB-07 | Cek Rute | Sudah login, Google Maps aktif | Buka menu **Cek Rute**, isi dua alamat valid, klik **Bandingkan emisi** | `Universitas Gadjah Mada, Yogyakarta` dan `Stasiun Tugu Yogyakarta` | Jarak dan durasi tampil, bukan 0, dan mendekati hasil Google Maps | | |
-| BB-08 | Cek Rute | Google Maps aktif dengan key salah | Ganti API key menjadi nilai salah, jalankan ulang aplikasi, coba **Bandingkan emisi** | Dua alamat valid | Pesan error yang jelas tentang API key, bukan jarak 0 | | |
-| BB-09 | Cek Rute | Sudah login, Google Maps aktif | Buka menu **Cek Rute**, isi alamat yang tidak ada, klik **Bandingkan emisi** | `Alamat Tidak Ada 12345` dan alamat valid | Pesan "rute tidak ditemukan" atau pesan sejenis, bukan jarak 0 | | |
-| BB-10 | Cek Rute | Sudah login, Google Maps dan Climatiq aktif | Centang semua moda, klik **Bandingkan emisi** | Dua alamat valid, 6 moda | Emisi setiap moda tampil dan rekomendasi menunjukkan moda paling hemat | | |
+| BB-07 | Cek Rute | Sudah login, `GoogleMaps:ApiKey` berisi key **asli** | Buka menu **Cek Rute**, isi dua alamat valid, klik **Bandingkan emisi** | `Universitas Gadjah Mada, Yogyakarta` dan `Stasiun Tugu Yogyakarta` | Jarak dan durasi tampil, bukan 0, dan mendekati hasil Google Maps | | |
+| BB-08 | Cek Rute | `GoogleMaps:ApiKey` berisi key salah yang **bukan placeholder** | Ganti API key menjadi nilai salah, jalankan ulang aplikasi, coba **Bandingkan emisi** | Dua alamat valid | Pesan error yang jelas tentang API key, bukan jarak 0 | | |
+| BB-09 | Cek Rute | Sudah login, `GoogleMaps:ApiKey` berisi key asli | Buka menu **Cek Rute**, isi alamat yang tidak ada, klik **Bandingkan emisi** | `Alamat Tidak Ada 12345` dan alamat valid | Pesan "rute tidak ditemukan" atau pesan sejenis, bukan jarak 0 | | |
+| BB-10 | Cek Rute | Sudah login, Google Maps aktif; faktor emisi dari master database | Centang semua moda, klik **Bandingkan emisi** | Dua alamat valid, 6 moda | Emisi setiap moda tampil dan rekomendasi menunjukkan moda paling hemat | | |
 | BB-11 | Riwayat | BB-10 berhasil | Setelah menghitung, klik **Simpan ke riwayat**, lalu buka **Riwayat** | - | Perjalanan muncul di daftar Riwayat dengan jarak dan emisi yang sama | | |
 | BB-12 | Riwayat | Ada minimal satu riwayat | Buka **Riwayat**, pilih satu data, klik **Hapus** | - | Data hilang dari daftar dan tidak muncul setelah aplikasi dibuka ulang | | |
 | BB-13 | Riwayat | Ada minimal satu riwayat | Buka **Riwayat**, klik **Hapus semua** | - | Muncul konfirmasi "Hapus semua riwayat perjalanan? Tindakan ini tidak bisa dibatalkan."; Batal mempertahankan data, OK menghapus semua | | |
@@ -57,10 +57,10 @@ aplikasi bisa dijalankan dengan database dan integrasi API yang berlaku.
 | BB-04 | Register | B | Diuji otomatis 22 Nov 2026 |
 | BB-05 | Register | B | Diuji otomatis 22 Nov 2026 |
 | BB-06 | Cek Rute | B | Diuji otomatis 22 Nov 2026 |
-| BB-07 | Cek Rute | | Menunggu integrasi Google Maps |
-| BB-08 | Cek Rute | | Menunggu integrasi Google Maps |
-| BB-09 | Cek Rute | | Menunggu integrasi Google Maps |
-| BB-10 | Cek Rute | | Menunggu integrasi Google Maps + Climatiq |
+| BB-07 | Cek Rute | | Butuh API key Google Maps asli |
+| BB-08 | Cek Rute | | Butuh API key salah yang bukan placeholder |
+| BB-09 | Cek Rute | | Butuh API key Google Maps asli |
+| BB-10 | Cek Rute | | Butuh API key Google Maps asli; Climatiq ditunda |
 | BB-11 | Riwayat | | Menunggu BB-10 |
 | BB-12 | Riwayat | | Fitur hapus satu data belum tersedia |
 | BB-13 | Riwayat | | Bisa dijalankan setelah ada riwayat |
@@ -79,10 +79,17 @@ Jumlah: **B** = 6, **S** = 0, **belum dijalankan** = 9.
   mengirim `Space` ke menu, dan membaca teks hasil langsung dari UI.
 - Label tombol yang benar: **Bandingkan emisi** (bukan "Cek Rute"),
   **Simpan ke riwayat**, **Hapus semua**, dan **Simpan target**.
-- BB-07 sampai BB-10 bergantung pada pekerjaan Bayu. Jalankan setelah
-  `FakeRouteService` dan `FakeEmissionService` diganti di `App.xaml.cs`.
+- **Penting untuk BB-07–BB-10:** integrasi Routes API hanya aktif kalau
+  `GoogleMaps:ApiKey` berisi key asli. Tanpa key, `App.xaml.cs` memakai
+  `FakeRouteService`, sehingga jarak dan durasi tetap tampil tetapi **simulasi**.
+  Jangan mencatat **B** untuk BB-07/BB-09 kalau key belum diisi.
+- BB-08 harus memakai key salah yang bukan placeholder; kalau key kosong atau
+  masih `GANTI_DENGAN...`, aplikasi memakai fake dan tidak memanggil API.
+- BB-10 memakai faktor emisi dari tabel `transport_modes`, bukan Climatiq.
+  Climatiq ditunda.
 - BB-08 membutuhkan restart aplikasi setelah mengganti key, karena konfigurasi
   dibaca saat aplikasi mulai.
-- BB-14 membutuhkan data perjalanan bulan berjalan. Jika belum ada, simpan satu
-  perjalanan terlebih dahulu.
+- BB-14 membutuhkan perjalanan bulan berjalan yang **opsi terbaiknya bukan
+  Sepeda/Jalan kaki**, karena emisi terbaik kedua moda itu 0 dan target tidak
+  akan pernah tercapai. Pilih hanya moda Mobil saat menghitung jika perlu.
 - BB-15 membutuhkan akses SQL Editor Supabase atau `psql`.

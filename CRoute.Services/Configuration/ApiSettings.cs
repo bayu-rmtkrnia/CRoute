@@ -60,7 +60,7 @@ public class GoogleMapsSettings
     /// <c>{EmbedBaseUrl}?key={ApiKey}&amp;origin={origin}&amp;destination={destination}</c>
     /// dengan <c>mode=directions</c> sudah termasuk di base URL, supaya peta yang
     /// tampil menunjukkan jalur origin -> destination, bukan sekadar titik lokasi
-    /// statis. Pemanggilan ini jalan paralel dan independen dari Distance Matrix:
+    /// statis. Pemanggilan ini jalan paralel dan independen dari Routes API:
     /// yang satu untuk visualisasi, yang satu untuk angka jarak. Kegagalan salah
     /// satu tidak boleh membatalkan yang lain.
     /// </summary>

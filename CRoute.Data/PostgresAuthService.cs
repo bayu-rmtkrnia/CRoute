@@ -14,6 +14,7 @@ public sealed class PostgresAuthService : IAuthService
     private const int Iterations = 100_000;
     private const int HashLength = 32;
     private const string Algorithm = "pbkdf2-sha256";
+    private const int MinPasswordLength = 6;
 
     private readonly string _connectionString;
 
@@ -84,6 +85,12 @@ public sealed class PostgresAuthService : IAuthService
     {
         if (string.IsNullOrWhiteSpace(fullName) || string.IsNullOrWhiteSpace(username))
             return false;
+
+        // UI sudah memvalidasi, tetapi service tetap menjaga kalau dipanggil
+        // dari tempat lain (mis. skrip/tes) agar tidak ada akun berpassword lemah.
+        if (string.IsNullOrEmpty(password) || password.Length < MinPasswordLength)
+            throw new ArgumentException(
+                $"Password minimal {MinPasswordLength} karakter.", nameof(password));
 
         byte[] salt = RandomNumberGenerator.GetBytes(16);
         byte[] hash = Rfc2898DeriveBytes.Pbkdf2(

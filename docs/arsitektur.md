@@ -19,7 +19,7 @@ dan master moda disimpan di **PostgreSQL** (lokal atau Supabase).
 | Bahasa / runtime | C#, .NET 10 (`net10.0-windows` untuk App, `net10.0` untuk layer lain) |
 | MVVM | CommunityToolkit.Mvvm 8.4.2 |
 | Database | PostgreSQL (Npgsql 10.0.3, ADO.NET murni, bukan EF Core) |
-| Integrasi eksternal | Google Maps (Routes API, Embed), Climatiq (faktor emisi) |
+| Integrasi eksternal | Google Maps (Routes API, Embed), Climatiq (faktor emisi; ditunda) |
 
 ## 2. Struktur solusi
 
@@ -31,7 +31,7 @@ croute.slnx
 ├── CRoute.Services/    Integrasi API eksternal + pembacaan konfigurasi
 ├── CRoute.Data/        Implementasi akses PostgreSQL (Npgsql)
 ├── CRoute.App/         WPF: View, ViewModel, navigasi, fake, converter
-└── CRoute.Tests/       Unit test xUnit (Core + Services)
+└── CRoute.Tests/       Unit test xUnit (Core + Services + validasi Data)
 ```
 
 Arah dependensi:
@@ -42,7 +42,8 @@ CRoute.App ──► CRoute.Services ──► CRoute.Core
      └──────► CRoute.Data ─────────────┘
 
 CRoute.Tests ──► CRoute.Core
-      └────────► CRoute.Services
+      ├────────► CRoute.Services
+      └────────► CRoute.Data
 ```
 
 - `CRoute.Core` tidak bergantung ke proyek lain. Di sinilah model
@@ -55,8 +56,9 @@ CRoute.Tests ──► CRoute.Core
   `PostgresTransportModeProvider`, `PostgresTripHistoryRepository`.
 - `CRoute.App` berisi tampilan dan logika presentasi. Ia tidak tahu SQL; semua
   akses lewat interface.
-- `CRoute.Tests` berisi unit test xUnit untuk model Core dan konfigurasi
-  Services. Test tidak menyentuh database; alur database diuji lewat black box.
+- `CRoute.Tests` berisi unit test xUnit untuk model Core, konfigurasi Services,
+  dan validasi Data yang tidak membuka koneksi database. Alur database tetap
+  diuji lewat black box.
 
 ## 3. Komponen per layer
 
@@ -87,12 +89,14 @@ atau black box. Integrasi eksternal yang belum selesai tetap ditandai ⚠️/❌
 | Tipe | Peran | Status |
 |---|---|---|
 | `RouteService` | Memanggil Google Maps Routes API (`computeRoutes`) | ✅ dipakai kalau API key diisi |
-| `EmissionService` | Hitung emisi lokal (`Calculate`) + `RefreshEmissionFactorAsync` ke Climatiq | ⚠️ `Calculate` ✅; refresh Climatiq ❌ (parsing TODO, belum dipanggil) |
+| `EmissionService` | Kerangka integrasi Climatiq (`Calculate` placeholder + `RefreshEmissionFactorAsync`) | ❌ ditunda; belum dipasang |
 | `ApiSettingsLoader` | Membaca `appsettings.json`, `appsettings.local.json`, dan env `CROUTE_*` | ✅ |
 | `ApiSettings`, `GoogleMapsSettings`, `ClimatiqSettings`, `DatabaseSettings` | Model konfigurasi | ✅ |
 
-> Catatan: `RouteService` dan `EmissionService` **belum dipasang** di
-> `App.xaml.cs`. Aplikasi masih memakai implementasi fake (lihat bagian 5).
+> Catatan: `RouteService` sudah dipasang dan dipakai kalau
+> `GoogleMaps:ApiKey` diisi. `EmissionService` (Climatiq) belum dipasang dan
+> integrasinya ditunda; aplikasi memakai `LocalEmissionService` yang menghitung
+> dari faktor tabel `transport_modes` (lihat bagian 5).
 
 ### 3.3 CRoute.Data
 
@@ -116,7 +120,7 @@ Lihat [`docs/database/README.md`](database/README.md).
 | Helper presentasi | `EmissionSavings` (hitung hemat vs baseline Mobil, dipakai Cek Rute, Dashboard, Statistik) | ✅ |
 | View | `LoginWindow`, `RegisterWindow`, `MainWindow`, `DashboardView`, `CariRuteView`, `HistoryView`, `StatsView` | ✅ |
 | Converter | Formatter emisi (`EmissionResultFormatter`, `RouteFormatter`), konversi ikon, level warna, dll. | ✅ |
-| Fakes | `FakeRouteService`, `FakeEmissionService`, `FakeAuthService`, `FakeTransportModeProvider`, `FakeTripHistoryRepository` | ✅ sebagai simulasi/uji |
+| Fakes | `FakeRouteService`, `FakeAuthService`, `FakeTransportModeProvider`, `FakeTripHistoryRepository` | ✅ sebagai simulasi/uji |
 | Peta (WebView2 / Embed) | Belum ada di View. Paket `Microsoft.Web.WebView2` sudah terpasang | ❌ |
 
 ## 4. Pola MVVM dan navigasi
@@ -142,20 +146,22 @@ Lihat [`docs/database/README.md`](database/README.md).
 | `ITransportModeProvider` | `PostgresTransportModeProvider` | ✅ nyata |
 | `ITripHistoryRepository` | `PostgresTripHistoryRepository` | ✅ nyata |
 | `IRouteService` | `RouteService` (kalau `GoogleMaps:ApiKey` diisi), selain itu `FakeRouteService` | ✅ / ⚠️ simulasi tanpa key |
-| `IEmissionService` | `FakeEmissionService` | ⚠️ perhitungan lokal; `EmissionService` belum dipasang |
+| `IEmissionService` | `LocalEmissionService` (faktor dari tabel `transport_modes`) | ✅ perhitungan lokal; Climatiq ditunda |
 | `IDialogService` | `DialogService` | ✅ |
 | `IWindowService` | `WindowService` | ✅ |
 
-Untuk beralih ke API nyata, cukup mengganti dua baris ini setelah parsing
-dikerjakan:
+Komposisi yang dipakai sekarang:
 
 ```csharp
-_routeService = new RouteService(new HttpClient(), settings);
-_emissionService = new EmissionService(new HttpClient(), settings);
+_routeService = settings.GoogleMaps.HasApiKey
+    ? new RouteService(Http, settings)
+    : new FakeRouteService();
+_emissionService = new LocalEmissionService(); // Climatiq ditunda
 ```
 
-Lihat [`integrasi-api.md`](integrasi-api.md) sebelum mengganti, karena
-`RouteService` saat ini mengembalikan jarak 0 sehingga semua emisi ikut 0.
+Lihat [`integrasi-api.md`](integrasi-api.md) untuk status dan batasan integrasi.
+`RouteService` sudah memakai Routes API; tanpa API key aplikasi memakai
+`FakeRouteService`.
 
 ## 6. Alur data utama
 
@@ -216,7 +222,7 @@ Bagian konfigurasi:
 | Kunci | Dipakai oleh | Status |
 |---|---|---|
 | `Database:ConnectionString` | Semua repository/auth PostgreSQL | ✅ |
-| `GoogleMaps:ApiKey` | `RouteService` | ⚠️ belum dipakai aplikasi |
+| `GoogleMaps:ApiKey` | `RouteService` | ✅ dipakai kalau diisi; tanpa key fallback simulasi |
 | `GoogleMaps:RoutesBaseUrl` | `RouteService` | ✅ (ada nilai bawaan) |
 | `GoogleMaps:EmbedBaseUrl` | Peta di View | ❌ belum ada |
 | `Climatiq:ApiKey` | `EmissionService.RefreshEmissionFactorAsync` | ❌ belum dipanggil |
@@ -244,8 +250,8 @@ Berkas ini dianggap tidak dipakai. Penghapusannya menunggu keputusan tim.
 
 ## 10. Rencana perubahan arsitektur
 
-- Pasang `RouteService` dan `EmissionService` di `App.xaml.cs` setelah parsing
-  selesai.
+- Pasang `EmissionService` (Climatiq) di `App.xaml.cs` setelah parsing selesai.
+  `RouteService` sudah terpasang.
 - Tambah peta rute (Embed API) di `CariRuteView` memakai WebView2.
 - Pertimbangkan agregasi SQL (`functions.sql`) jika riwayat sudah banyak.
 - EF Core tetap menjadi opsi, tetapi saat ini tidak dipakai.
