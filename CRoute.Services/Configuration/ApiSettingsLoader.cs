@@ -27,6 +27,12 @@ public static class ApiSettingsLoader
         var settings = new ApiSettings();
         configuration.Bind(settings);
 
+        // Placeholder di appsettings.json jangan sampai dipakai sebagai
+        // connection string. Kosongkan supaya App.xaml.cs menampilkan pesan
+        // "connection string belum diatur" yang jelas.
+        if (settings.Database.ConnectionString.StartsWith("GANTI_DENGAN", StringComparison.Ordinal))
+            settings.Database.ConnectionString = string.Empty;
+
         return settings;
     }
 }
