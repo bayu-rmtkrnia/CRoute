@@ -41,7 +41,7 @@ public class TripHistory
     /// </summary>
     public double GetMonthlyTotal()
     {
-        var now = DateTime.Now;
+        DateTime now = AppClock.Now;
 
         return GetMonthlyTotal(now.Year, now.Month);
     }
@@ -56,7 +56,9 @@ public class TripHistory
 
         foreach (var trip in _trips)
         {
-            if (trip.TripDate.Year != year || trip.TripDate.Month != month)
+            DateTime tripDate = AppClock.ToAppTime(trip.TripDate);
+
+            if (tripDate.Year != year || tripDate.Month != month)
                 continue;
 
             total += trip.GetBestOption()?.TotalEmissionKg ?? 0;

@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CRoute.App.Converters;
 using CRoute.App.Services;
+using CRoute.Core;
 using CRoute.Core.Interfaces;
 using CRoute.Core.Models;
 
@@ -24,7 +25,7 @@ public partial class DashboardViewModel : ObservableObject
         string fullName = auth.CurrentUserFullName ?? "Tamu";
         string firstName = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "Tamu";
         Greeting = "Halo, " + firstName + "!";
-        DateText = DateTime.Now.ToString("dddd, d MMMM yyyy", DisplayCulture.Indonesian);
+        DateText = AppClock.Now.ToString("dddd, d MMMM yyyy", DisplayCulture.Indonesian);
 
         TripHistory history = historyRepository.GetHistory();
         TransportMode baseline = modes.GetBaseline();

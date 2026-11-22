@@ -2,6 +2,7 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CRoute.App.Converters;
+using CRoute.Core;
 using CRoute.Core.Interfaces;
 using CRoute.Core.Models;
 
@@ -107,9 +108,13 @@ public partial class StatsViewModel : ObservableObject
 
     private static List<DailyEmissionBarViewModel> BuildDailyBars(IReadOnlyList<Trip> trips)
     {
+        DateTime today = AppClock.Now.Date;
+
         var days = Enumerable.Range(0, ChartDays)
-            .Select(i => DateTime.Today.AddDays(i - (ChartDays - 1)))
-            .Select(day => (Day: day, Kg: trips.Where(t => t.TripDate.Date == day).Sum(BestEmissionKg)))
+            .Select(i => today.AddDays(i - (ChartDays - 1)))
+            .Select(day => (Day: day, Kg: trips
+                .Where(t => AppClock.ToAppTime(t.TripDate).Date == day)
+                .Sum(BestEmissionKg)))
             .ToList();
 
         double max = days.Max(d => d.Kg);
