@@ -155,7 +155,8 @@ Catatan:
 
 - Versi SQL dan versi C# sama-sama memakai zona **Asia/Jakarta**. C# memakai
   `AppClock.Now` dan `AppClock.ToAppTime()`, bukan `DateTime.Now`, sehingga
-  hasilnya tidak bergantung pada zona waktu komputer. ✅
+  hasilnya tidak bergantung pada zona waktu komputer. Jika zona tidak tersedia,
+  `AppClock` melempar error, bukan diam-diam memakai UTC. ✅
 - Diverifikasi 22 November 2026: total C# dan SQL sama, yaitu 1,7442 kg untuk
   rute uji 10,2 km dengan moda Mobil. Unit test juga memeriksa trip pada
   30 November 2026 pukul 17.00 UTC (1 Desember 2026 pukul 00.00 WIB) dan

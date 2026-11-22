@@ -73,7 +73,7 @@ Rujukan lengkap ada di [`integrasi-api.md`](integrasi-api.md),
 | Placeholder `ISI_...` vs `GANTI_DENGAN...` | ✅ | Semua memakai `GANTI_DENGAN_...`; `ApiSettingsLoader` mengosongkan placeholder. |
 | Zona waktu | ✅ | `AppClock` (Asia/Jakarta) dipakai `TripHistory`, `StatsViewModel`, dan `DashboardViewModel`. |
 | `PostgresTripHistoryRepository.GetMonthlyTotal()` | ✅ | Dihapus karena tidak dipakai; agregasi memakai `TripHistory.GetMonthlyTotal()`. |
-| Proyek test | ✅ | `CRoute.Tests`: 33 lulus, 4 di-skip menunggu `ParseRoute` Bayu. |
+| Proyek test | ✅ | `CRoute.Tests`: 36 lulus, 4 di-skip menunggu `ParseRoute` Bayu. |
 | Dokumen black box | ✅ | 15 kasus; BB-01–BB-06 sudah dijalankan dan bernilai **B**. |
 
 ### Progres 22 November 2026
@@ -87,8 +87,9 @@ Rujukan lengkap ada di [`integrasi-api.md`](integrasi-api.md),
 - [x] Simpan, baca, ubah target, dan hapus semua trip berhasil lewat
       `PostgresTripHistoryRepository`. Total bulanan C# dan SQL sama
       (1,7442 kg untuk rute uji 10,2 km dengan moda Mobil).
-- [x] `CRoute.Tests` dibuat; 33 test lulus, 4 test kontrak di-skip menunggu
-      implementasi `ParseRoute` oleh Bayu.
+- [x] `CRoute.Tests` dibuat; 36 test lulus, 4 test kontrak di-skip menunggu
+      implementasi `ParseRoute` oleh Bayu. Termasuk 3 test `AppClock` untuk
+      offset WIB dan konversi batas bulan.
 - [x] `docs/pengujian-black-box.md` dibuat dengan 15 kasus.
 - [x] Placeholder `appsettings.json` dan `appsettings.example.json` diseragamkan.
 - [x] BB-01–BB-06 dijalankan otomatis lewat Windows UI Automation dan

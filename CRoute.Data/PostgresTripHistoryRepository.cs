@@ -73,6 +73,9 @@ public sealed class PostgresTripHistoryRepository : ITripHistoryRepository
                     trip = new Trip
                     {
                         Id = tripId,
+                        // Npgsql bisa mengembalikan Kind=Unspecified untuk
+                        // timestamptz. Tegaskan UTC dulu supaya konversi ke
+                        // waktu lokal tidak salah menggeser tanggal.
                         TripDate = DateTime
                             .SpecifyKind(reader.GetDateTime(1), DateTimeKind.Utc)
                             .ToLocalTime(),

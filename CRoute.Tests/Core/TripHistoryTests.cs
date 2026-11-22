@@ -1,3 +1,4 @@
+using CRoute.Core;
 using CRoute.Core.Models;
 
 namespace CRoute.Tests.Core;
@@ -70,7 +71,7 @@ public class TripHistoryTests
     public void GetMonthlyTotal_BulanBerjalan_MengabaikanBulanLain()
     {
         var history = new TripHistory();
-        DateTime now = DateTime.Now;
+        DateTime now = AppClock.Now;
 
         history.AddTrip(CreateTrip(now, bestEmissionKg: 1.0));
         history.AddTrip(CreateTrip(now.AddMonths(-1), bestEmissionKg: 5.0));
@@ -109,7 +110,7 @@ public class TripHistoryTests
     public void GetProgress_TargetNol_MengembalikanNol()
     {
         var history = new TripHistory();
-        history.AddTrip(CreateTrip(DateTime.Now, bestEmissionKg: 5.0));
+        history.AddTrip(CreateTrip(AppClock.Now, bestEmissionKg: 5.0));
 
         Assert.Equal(0, history.GetProgress());
     }
@@ -118,7 +119,7 @@ public class TripHistoryTests
     public void GetProgress_SetengahTarget_MengembalikanNolKomaLima()
     {
         var history = new TripHistory { MonthlyTargetKg = 10 };
-        history.AddTrip(CreateTrip(DateTime.Now, bestEmissionKg: 5.0));
+        history.AddTrip(CreateTrip(AppClock.Now, bestEmissionKg: 5.0));
 
         Assert.Equal(0.5, history.GetProgress(), 10);
     }
@@ -127,7 +128,7 @@ public class TripHistoryTests
     public void GetProgress_TargetTerlampaui_MengembalikanLebihDariSatu()
     {
         var history = new TripHistory { MonthlyTargetKg = 5 };
-        history.AddTrip(CreateTrip(DateTime.Now, bestEmissionKg: 7.5));
+        history.AddTrip(CreateTrip(AppClock.Now, bestEmissionKg: 7.5));
 
         Assert.Equal(1.5, history.GetProgress(), 10);
     }

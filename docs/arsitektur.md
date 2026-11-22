@@ -69,7 +69,7 @@ CRoute.Tests ──► CRoute.Core
 | `EmissionResult` | Total emisi (kg) + moda yang dipakai | ✅ |
 | `Trip` | Satu perjalanan: tanggal, rute, daftar hasil emisi. `GetBestOption()` = emisi terkecil | ✅ |
 | `TripHistory` | Daftar trip + target bulanan. `GetMonthlyTotal()`, `GetProgress()` | ✅ |
-| `AppClock` | Waktu acuan aplikasi di zona Asia/Jakarta untuk agregasi bulanan/harian | ✅ |
+| `AppClock` | Waktu acuan aplikasi di zona Asia/Jakarta untuk agregasi bulanan/harian; melempar error jika zona tidak tersedia | ✅ unit test |
 | `IRouteService` | `Task<Route> GetRouteAsync(origin, destination)` | ✅ kontrak |
 | `IEmissionService` | `EmissionResult Calculate(route, mode)` | ✅ kontrak |
 | `ITripHistoryRepository` | `GetHistory`, `AddTrip`, `SetMonthlyTarget`, `ClearTrips` | ✅ kontrak |
@@ -78,6 +78,9 @@ CRoute.Tests ──► CRoute.Core
 
 Validasi ada di setter model (mis. nama moda tidak boleh kosong, emisi tidak
 boleh negatif, jarak harus angka valid).
+
+Status ✅ di tabel ini berarti perilakunya sudah dicek lewat unit test otomatis
+atau black box. Integrasi eksternal yang belum selesai tetap ditandai ⚠️/❌.
 
 ### 3.2 CRoute.Services
 

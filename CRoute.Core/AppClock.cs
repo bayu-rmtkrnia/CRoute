@@ -7,7 +7,8 @@ namespace CRoute.Core;
 /// </summary>
 public static class AppClock
 {
-    private static readonly TimeZoneInfo Zone = ResolveZone();
+    /// <summary>Zona waktu acuan aplikasi (Asia/Jakarta).</summary>
+    public static TimeZoneInfo Zone { get; } = ResolveZone();
 
     /// <summary>Waktu sekarang di zona aplikasi (Asia/Jakarta).</summary>
     public static DateTime Now => TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, Zone);
@@ -24,8 +25,8 @@ public static class AppClock
     private static TimeZoneInfo ResolveZone()
     {
         // Windows memakai "SE Asia Standard Time"; Linux/macOS memakai
-        // "Asia/Jakarta". .NET modern biasanya menerima keduanya, tetapi
-        // fallback ini menjaga aplikasi tetap jalan di lingkungan tanpa ICU.
+        // "Asia/Jakarta". Jangan diam-diam jatuh ke UTC: itu akan menggeser
+        // batas bulan/hari 7 jam tanpa terlihat.
         foreach (string id in new[] { "Asia/Jakarta", "SE Asia Standard Time" })
         {
             try
@@ -40,6 +41,9 @@ public static class AppClock
             }
         }
 
-        return TimeZoneInfo.Utc;
+        throw new InvalidOperationException(
+            "Zona waktu Asia/Jakarta tidak tersedia di sistem ini. " +
+            "Agregasi bulanan dan harian membutuhkan zona tersebut; " +
+            "pasang data zona waktu (ICU/tzdata) lalu jalankan ulang aplikasi.");
     }
 }
