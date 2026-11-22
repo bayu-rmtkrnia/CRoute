@@ -15,8 +15,8 @@ namespace CRoute.App;
 /// Composition root: semua dependency dirakit di sini lalu disuntikkan lewat
 /// constructor ViewModel. Auth, riwayat, dan master moda memakai PostgreSQL;
 /// rute memakai Google Maps Routes API kalau API key sudah diisi (kalau belum,
-/// jatuh ke <see cref="FakeRouteService"/>); emisi masih fake sampai
-/// integrasi Climatiq dikerjakan.
+/// jatuh ke <see cref="FakeRouteService"/>); emisi dihitung lokal dari faktor
+/// tabel <c>transport_modes</c> karena Climatiq ditunda.
 /// </summary>
 public partial class App : Application
 {
@@ -71,7 +71,7 @@ public partial class App : Application
         _routeService = settings.GoogleMaps.HasApiKey
             ? new RouteService(Http, settings)
             : new FakeRouteService();
-        _emissionService = new FakeEmissionService();
+        _emissionService = new LocalEmissionService();
         _modes = new PostgresTransportModeProvider(connectionString);
         _history = new PostgresTripHistoryRepository(
             connectionString,
