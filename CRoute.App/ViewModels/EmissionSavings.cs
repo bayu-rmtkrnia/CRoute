@@ -13,10 +13,10 @@ public static class EmissionSavings
         return Math.Max(0, baseline.CalculateEmission(route.DistanceKm) - chosen.TotalEmissionKg);
     }
 
-    /// <summary>Penghematan dari opsi terbaik sebuah perjalanan; 0 kalau belum ada hasil.</summary>
+    /// <summary>Penghematan dari opsi yang dipilih pengguna; 0 kalau belum ada hasil.</summary>
     public static double ForTrip(Trip trip, TransportMode baseline)
     {
-        EmissionResult? best = trip.GetBestOption();
-        return best is null ? 0 : Calculate(trip.Route, best, baseline);
+        EmissionResult? chosen = trip.GetChosenOption();
+        return chosen is null ? 0 : Calculate(trip.Route, chosen, baseline);
     }
 }

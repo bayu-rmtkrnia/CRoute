@@ -103,26 +103,35 @@
                                     <DataTemplate DataType="{x:Type vm:ModeComparisonRowViewModel}">
                                         <Grid Margin="0,7">
                                             <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="30"/>
                                                 <ColumnDefinition Width="34"/>
                                                 <ColumnDefinition Width="96"/>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="86"/>
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Text="{Binding Mode.IconName, Converter={StaticResource TransportModeIcon}}"
+                                            <RadioButton Grid.Column="0" GroupName="ChosenMode"
+                                                         AutomationProperties.Name="{Binding Mode.Name}"
+                                                         IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                         VerticalAlignment="Center"
+                                                         ToolTip="Pilih moda ini sebagai perjalanan yang kamu gunakan"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding Mode.IconName, Converter={StaticResource TransportModeIcon}}"
                                                        FontSize="18" VerticalAlignment="Center"/>
-                                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <StackPanel Grid.Column="2" VerticalAlignment="Center">
                                                 <TextBlock Text="{Binding Mode.Name}" FontWeight="SemiBold"
                                                            Foreground="{StaticResource TextBrush}"/>
                                                 <TextBlock Text="★ terbaik" FontSize="10"
                                                            Foreground="{StaticResource MidGreenBrush}"
                                                            Visibility="{Binding IsBest, Converter={StaticResource BoolToVisibility}}"/>
+                                                <TextBlock Text="{Binding Detail}" FontSize="10"
+                                                           Foreground="{StaticResource MutedBrush}"
+                                                           TextWrapping="Wrap" Margin="0,2,0,0"/>
                                             </StackPanel>
-                                            <ProgressBar Grid.Column="2" Style="{StaticResource SoftProgress}"
+                                            <ProgressBar Grid.Column="3" Style="{StaticResource SoftProgress}"
                                                          Minimum="0" Maximum="100"
                                                          Value="{Binding Percent, Mode=OneWay}"
                                                          Foreground="{Binding Level, Converter={StaticResource EmissionLevelToBrush}}"
                                                          Margin="8,0" VerticalAlignment="Center"/>
-                                            <TextBlock Grid.Column="3"
+                                            <TextBlock Grid.Column="4"
                                                        Text="{Binding Result, Converter={StaticResource EmissionResultFormatter}}"
                                                        HorizontalAlignment="Right" VerticalAlignment="Center"
                                                        FontWeight="SemiBold" Foreground="{StaticResource TextBrush}"/>
@@ -130,6 +139,18 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+
+                            <TextBlock Text="Pilih satu moda yang kamu gunakan, lalu simpan ke riwayat."
+                                       Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,10,0,0"
+                                       Visibility="{Binding ShowSelectionHint, Converter={StaticResource BoolToVisibility}}"/>
+
+                            <TextBlock Text="{Binding SelectedModeText}" FontWeight="SemiBold"
+                                       Foreground="{StaticResource DeepGreenBrush}" Margin="0,10,0,0"
+                                       Visibility="{Binding HasSelection, Converter={StaticResource BoolToVisibility}}"/>
+
+                            <TextBlock Text="{Binding TransitStatusText}" Style="{StaticResource Muted}"
+                                       TextWrapping="Wrap" Margin="0,10,0,0"
+                                       Visibility="{Binding HasTransitStatus, Converter={StaticResource BoolToVisibility}}"/>
 
                             <StackPanel Orientation="Horizontal" Margin="0,22,0,0">
                                 <Button Width="210" Command="{Binding SimpanCommand}">

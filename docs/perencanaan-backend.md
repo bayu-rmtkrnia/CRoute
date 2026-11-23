@@ -73,7 +73,7 @@ Rujukan lengkap ada di [`integrasi-api.md`](integrasi-api.md),
 | Placeholder `ISI_...` vs `GANTI_DENGAN...` | ✅ | Semua memakai `GANTI_DENGAN_...`; `ApiSettingsLoader` mengosongkan placeholder. |
 | Zona waktu | ✅ | `AppClock` (Asia/Jakarta) dipakai `TripHistory`, `StatsViewModel`, dan `DashboardViewModel`. |
 | `PostgresTripHistoryRepository.GetMonthlyTotal()` | ✅ | Dihapus karena tidak dipakai; agregasi memakai `TripHistory.GetMonthlyTotal()`. |
-| Proyek test | ✅ | `CRoute.Tests`: 52 lulus, 0 di-skip. |
+| Proyek test | ✅ | `CRoute.Tests`: 67 lulus, 0 di-skip. |
 | Dokumen black box | ✅ | 15 kasus; BB-01–BB-06 sudah dijalankan dan bernilai **B**. |
 
 ### Progres 22 November 2026
@@ -87,8 +87,9 @@ Rujukan lengkap ada di [`integrasi-api.md`](integrasi-api.md),
 - [x] Simpan, baca, ubah target, dan hapus semua trip berhasil lewat
       `PostgresTripHistoryRepository`. Total bulanan C# dan SQL sama
       (1,7442 kg untuk rute uji 10,2 km dengan moda Mobil).
-- [x] `CRoute.Tests` dibuat; 52 test lulus, 0 di-skip. Termasuk test
-      `RouteService` (Routes API), 3 test `AppClock`, dan validasi password
+- [x] `CRoute.Tests` dibuat; 67 test lulus, 0 di-skip. Termasuk test
+      `RouteService` (Routes API), `TransitRouteService` (filter bus/kereta),
+      `Trip.GetChosenOption`/fallback, 3 test `AppClock`, dan validasi password
       `PostgresAuthService`.
 - [x] `docs/pengujian-black-box.md` dibuat dengan 15 kasus.
 - [x] Placeholder `appsettings.json` dan `appsettings.example.json` diseragamkan.

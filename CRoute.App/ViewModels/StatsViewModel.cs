@@ -92,11 +92,11 @@ public partial class StatsViewModel : ObservableObject
 
         SavedAllText = EmissionResultFormatter.FormatKg(trips.Sum(t => EmissionSavings.ForTrip(t, _baseline)), 1);
         AverageText = trips.Count > 0
-            ? EmissionResultFormatter.FormatKg(trips.Average(BestEmissionKg))
+            ? EmissionResultFormatter.FormatKg(trips.Average(ChosenEmissionKg))
             : "-";
 
         var chosenModes = trips
-            .Select(t => t.GetBestOption()?.Mode.Name)
+            .Select(t => t.GetChosenOption()?.Mode.Name)
             .OfType<string>()
             .ToList();
         FavoriteModeName = chosenModes.Count > 0
@@ -114,7 +114,7 @@ public partial class StatsViewModel : ObservableObject
             .Select(i => today.AddDays(i - (ChartDays - 1)))
             .Select(day => (Day: day, Kg: trips
                 .Where(t => AppClock.ToAppTime(t.TripDate).Date == day)
-                .Sum(BestEmissionKg)))
+                .Sum(ChosenEmissionKg)))
             .ToList();
 
         double max = days.Max(d => d.Kg);
@@ -129,5 +129,5 @@ public partial class StatsViewModel : ObservableObject
             .ToList();
     }
 
-    private static double BestEmissionKg(Trip trip) => trip.GetBestOption()?.TotalEmissionKg ?? 0;
+    private static double ChosenEmissionKg(Trip trip) => trip.GetChosenOption()?.TotalEmissionKg ?? 0;
 }

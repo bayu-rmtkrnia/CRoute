@@ -8,7 +8,7 @@ CRoute adalah sebuah aplikasi desktop yang berfungsi membandingkan emisi yang di
 - Hitung estimasi emisi CO₂ dari faktor emisi master; integrasi Climatiq direncanakan.
 - Pilih dan bandingkan moda: mobil, motor, bus, kereta, sepeda, dan jalan kaki.
 - Tampilkan rekomendasi moda paling hemat emisi dan visualisasi perbandingannya.
-- Simpan riwayat perjalanan, lihat statistik, dan atur target emisi bulanan.
+- Simpan riwayat perjalanan dengan moda yang benar-benar dipakai, lihat statistik, dan atur target emisi bulanan.
 
 Status implementasi setiap fitur dijelaskan di [`docs/integrasi-api.md`](docs/integrasi-api.md) dan [`docs/arsitektur.md`](docs/arsitektur.md).
 
@@ -42,6 +42,7 @@ Perencanaan database PostgreSQL beserta skrip siap pakai ada di [`docs/database`
 - [`supabase.md`](docs/database/supabase.md) — langkah memakai Supabase sebagai database.
 - [`target-alignment-plan.md`](docs/database/target-alignment-plan.md) — rencana agar skema ≥70% mirip dengan target, tetap multi-user.
 - [`migration-minimal-target.sql`](docs/database/migration-minimal-target.sql) — migrasi database lama ke struktur minimal target.
+- [`migration-chosen-mode.sql`](docs/database/migration-chosen-mode.sql) — migrasi `fn_save_trip` untuk menyimpan moda yang dipilih pengguna.
 
 ## Menjalankan aplikasi
 

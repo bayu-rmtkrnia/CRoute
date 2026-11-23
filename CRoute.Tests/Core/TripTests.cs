@@ -12,9 +12,9 @@ public class TripTests
         DurationMin = 30,
     };
 
-    private static TransportMode CreateMode(double factor = 0.171) => new()
+    private static TransportMode CreateMode(double factor = 0.171, string name = "Mobil") => new()
     {
-        Name = "Mobil",
+        Name = name,
         EmissionFactor = factor,
         IconName = "car",
     };
@@ -45,6 +45,61 @@ public class TripTests
 
         Assert.NotNull(best);
         Assert.Equal(0.41, best!.TotalEmissionKg, 10);
+    }
+
+    [Fact]
+    public void GetChosenOption_TanpaPilihan_MemakaiOpsiTerbaik()
+    {
+        var trip = new Trip { Route = CreateRoute() };
+        TransportMode car = CreateMode();
+        TransportMode bus = CreateMode(0.089, "Bus");
+        trip.AddResult(CreateResult(0.63, car));
+        trip.AddResult(CreateResult(0.28, bus));
+
+        EmissionResult? chosen = trip.GetChosenOption();
+
+        Assert.NotNull(chosen);
+        Assert.Equal(0.28, chosen!.TotalEmissionKg, 10);
+        Assert.Equal("Bus", chosen.Mode.Name);
+    }
+
+    [Fact]
+    public void GetChosenOption_DenganPilihan_MengembalikanPilihanPengguna()
+    {
+        var trip = new Trip { Route = CreateRoute() };
+        TransportMode car = CreateMode();
+        TransportMode bus = CreateMode(0.089);
+        trip.AddResult(CreateResult(0.63, car));
+        trip.AddResult(CreateResult(0.28, bus));
+        trip.ChosenModeId = car.Id;
+
+        EmissionResult? chosen = trip.GetChosenOption();
+
+        Assert.NotNull(chosen);
+        Assert.Equal(0.63, chosen!.TotalEmissionKg, 10);
+        Assert.Equal("Mobil", chosen.Mode.Name);
+    }
+
+    [Fact]
+    public void GetChosenOption_PilihanTidakDitemukan_FallbackKeOpsiTerbaik()
+    {
+        var trip = new Trip { Route = CreateRoute() };
+        trip.AddResult(CreateResult(0.63));
+        trip.AddResult(CreateResult(0.28));
+        trip.ChosenModeId = Guid.NewGuid();
+
+        EmissionResult? chosen = trip.GetChosenOption();
+
+        Assert.NotNull(chosen);
+        Assert.Equal(0.28, chosen!.TotalEmissionKg, 10);
+    }
+
+    [Fact]
+    public void GetChosenOption_TanpaHasil_MengembalikanNull()
+    {
+        var trip = new Trip { Route = CreateRoute() };
+
+        Assert.Null(trip.GetChosenOption());
     }
 
     [Fact]

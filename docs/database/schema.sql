@@ -219,6 +219,29 @@ ORDER BY er.trip_id,
          er.created_at ASC,
          er.emission_id ASC;
 
+-- Satu baris per trip: hasil yang dipilih pengguna. Kalau belum ada pilihan
+-- (data lama), fallback ke hasil dengan emisi terkecil.
+CREATE OR REPLACE VIEW v_trip_chosen_result AS
+SELECT t.trip_id,
+       er.emission_id               AS emission_result_id,
+       er.transport_mode_id,
+       er.total_emission_kg,
+       er.emission_factor
+FROM trips t
+JOIN LATERAL (
+    SELECT er.emission_id,
+           er.transport_mode_id,
+           er.total_emission_kg,
+           er.emission_factor
+    FROM emission_results er
+    WHERE er.trip_id = t.trip_id
+    ORDER BY (er.transport_mode_id = t.chosen_mode_id) DESC,
+             er.total_emission_kg ASC,
+             er.created_at ASC,
+             er.emission_id ASC
+    LIMIT 1
+) er ON TRUE;
+
 -- Data siap pakai untuk Dashboard, Riwayat, dan Statistik.
 CREATE OR REPLACE VIEW v_trip_summary AS
 SELECT
@@ -239,17 +262,24 @@ SELECT
     COALESCE(ROUND(r.distance_km * bm.emission_factor, 4), 0)
                                                    AS baseline_emission_kg,
     CASE
-        WHEN b.emission_result_id IS NULL THEN 0
+        WHEN c.emission_result_id IS NULL THEN 0
         ELSE GREATEST(
             0::numeric,
             COALESCE(ROUND(r.distance_km * bm.emission_factor, 4), 0)
-            - b.total_emission_kg
+            - c.total_emission_kg
         )
-    END                                            AS saved_kg
+    END                                            AS saved_kg,
+    c.emission_result_id                           AS chosen_result_id,
+    c.transport_mode_id                            AS chosen_mode_id,
+    ctm.name                                       AS chosen_mode_name,
+    ctm.icon                                       AS chosen_mode_icon,
+    COALESCE(c.total_emission_kg, 0)               AS chosen_emission_kg
 FROM trips t
 JOIN routes r ON r.trip_id = t.trip_id
 LEFT JOIN v_trip_best_result b ON b.trip_id = t.trip_id
 LEFT JOIN transport_modes tm ON tm.transport_mode_id = b.transport_mode_id
+LEFT JOIN v_trip_chosen_result c ON c.trip_id = t.trip_id
+LEFT JOIN transport_modes ctm ON ctm.transport_mode_id = c.transport_mode_id
 LEFT JOIN LATERAL (
     SELECT emission_factor
     FROM transport_modes

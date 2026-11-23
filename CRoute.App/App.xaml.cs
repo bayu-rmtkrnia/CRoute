@@ -25,6 +25,7 @@ public partial class App : Application
 
     private IAuthService _auth = null!;
     private IRouteService _routeService = null!;
+    private ITransitRouteService _transitService = null!;
     private IEmissionService _emissionService = null!;
     private ITransportModeProvider _modes = null!;
     private ITripHistoryRepository _history = null!;
@@ -71,6 +72,9 @@ public partial class App : Application
         _routeService = settings.GoogleMaps.HasApiKey
             ? new RouteService(Http, settings)
             : new FakeRouteService();
+        _transitService = settings.GoogleMaps.HasApiKey
+            ? new TransitRouteService(Http, settings)
+            : new FakeTransitRouteService();
         _emissionService = new LocalEmissionService();
         _modes = new PostgresTransportModeProvider(connectionString);
         _history = new PostgresTripHistoryRepository(
@@ -92,7 +96,7 @@ public partial class App : Application
 
     private ObservableObject CreatePageViewModel(AppPage page, INavigationService navigation) => page switch
     {
-        AppPage.CariRute => new CariRuteViewModel(_routeService, _emissionService, _modes, _history, navigation),
+        AppPage.CariRute => new CariRuteViewModel(_routeService, _transitService, _emissionService, _modes, _history, navigation),
         AppPage.History => new HistoryViewModel(_history, _modes, _dialogs, navigation),
         AppPage.Stats => new StatsViewModel(_history, _modes),
         _ => new DashboardViewModel(_auth, _history, _modes, navigation),

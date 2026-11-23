@@ -126,6 +126,7 @@ public sealed class TripEntity
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
+    public Guid? ChosenModeId { get; set; }
     public DateTime TripDate { get; set; } // UTC
     public DateTime CreatedAt { get; set; }
 
@@ -286,7 +287,7 @@ Boleh di-cache di memori karena master data jarang berubah.
 | Method | Rencana implementasi |
 |---|---|
 | `GetHistory()` | ambil `settings` + semua trip milik `CurrentUserId`, lalu map ke `TripHistory` |
-| `AddTrip(Trip trip)` | panggil `fn_save_trip(...)` **atau** insert EF Core dalam satu transaksi |
+| `AddTrip(Trip trip)` | panggil `fn_save_trip(..., p_chosen_mode_id)` **atau** insert EF Core dalam satu transaksi |
 | `SetMonthlyTarget(double kg)` | `SELECT fn_set_monthly_target(...)` |
 | `ClearTrips()` | `SELECT fn_clear_trips(...)` |
 
@@ -324,6 +325,7 @@ public TripHistory GetHistory()
         {
             Id = entity.Id,
             TripDate = entity.TripDate.ToLocalTime(),
+            ChosenModeId = entity.ChosenModeId,
             Route = new Route
             {
                 Id = entity.Route.Id,
@@ -384,7 +386,8 @@ db.Database.ExecuteSqlInterpolated($"""
     SELECT fn_save_trip(
         {userId}, {trip.Route.Origin}, {trip.Route.Destination},
         {(decimal)trip.Route.DistanceKm}, {trip.Route.DurationMin},
-        {resultsJson}::jsonb, {trip.TripDate.ToUniversalTime()});
+        {resultsJson}::jsonb, {trip.TripDate.ToUniversalTime()},
+        {trip.ChosenModeId});
     """);
 ```
 
@@ -558,10 +561,13 @@ terjadi duplikasi/konflik. Pilih salah satu.
 - Register username baru berhasil; register username yang sama gagal.
 - Login password salah gagal; password benar berhasil.
 - Login case-insensitive terhadap username (`Demo` = `demo`).
-- Simpan trip: 1 baris `trips`, 1 baris `routes`, N baris `emission_results`.
+- Simpan trip: 1 baris `trips`, 1 baris `routes`, N baris `emission_results`,
+  dan `trips.chosen_mode_id` = moda yang dipilih pengguna.
+- Simpan dengan `chosen_mode_id` yang tidak ada di hasil emisi harus ditolak.
+- Simpan tanpa `chosen_mode_id` (klien lama) memakai opsi terbaik sebagai fallback.
 - Hapus semua trip: trip/rute/hasil hilang, target bulanan tetap.
 - Emisi bulan ini hanya menghitung bulan berjalan (Asia/Jakarta).
 - Grafik 7 hari menampilkan hari kosong dengan nilai 0.
-- Moda favorit dihitung dari opsi terbaik tiap trip.
+- Moda favorit dihitung dari moda terpilih tiap trip; data lama memakai opsi terbaik.
 - Mengubah faktor emisi master tidak mengubah riwayat lama (snapshot).
 - Dua pengguna berbeda tidak bisa melihat riwayat satu sama lain.
