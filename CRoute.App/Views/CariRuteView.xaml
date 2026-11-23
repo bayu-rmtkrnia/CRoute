@@ -116,6 +116,9 @@
                                                 <TextBlock Text="★ terbaik" FontSize="10"
                                                            Foreground="{StaticResource MidGreenBrush}"
                                                            Visibility="{Binding IsBest, Converter={StaticResource BoolToVisibility}}"/>
+                                                <TextBlock Text="{Binding Detail}" FontSize="10"
+                                                           Foreground="{StaticResource MutedBrush}"
+                                                           TextWrapping="Wrap" Margin="0,2,0,0"/>
                                             </StackPanel>
                                             <ProgressBar Grid.Column="2" Style="{StaticResource SoftProgress}"
                                                          Minimum="0" Maximum="100"
@@ -130,6 +133,10 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
+
+                            <TextBlock Text="{Binding TransitStatusText}" Style="{StaticResource Muted}"
+                                       TextWrapping="Wrap" Margin="0,10,0,0"
+                                       Visibility="{Binding HasTransitStatus, Converter={StaticResource BoolToVisibility}}"/>
 
                             <StackPanel Orientation="Horizontal" Margin="0,22,0,0">
                                 <Button Width="210" Command="{Binding SimpanCommand}">

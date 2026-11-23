@@ -16,6 +16,7 @@ namespace CRoute.App.ViewModels;
 public partial class CariRuteViewModel : ObservableObject
 {
     private readonly IRouteService _routeService;
+    private readonly ITransitRouteService _transitService;
     private readonly IEmissionService _emissionService;
     private readonly ITripHistoryRepository _historyRepository;
     private readonly INavigationService _navigation;
@@ -26,12 +27,14 @@ public partial class CariRuteViewModel : ObservableObject
 
     public CariRuteViewModel(
         IRouteService routeService,
+        ITransitRouteService transitService,
         IEmissionService emissionService,
         ITransportModeProvider modes,
         ITripHistoryRepository historyRepository,
         INavigationService navigation)
     {
         _routeService = routeService;
+        _transitService = transitService;
         _emissionService = emissionService;
         _historyRepository = historyRepository;
         _navigation = navigation;
@@ -57,6 +60,13 @@ public partial class CariRuteViewModel : ObservableObject
     private string _errorMessage = string.Empty;
 
     public bool HasError => ErrorMessage.Length > 0;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasTransitStatus))]
+    private string _transitStatusText = string.Empty;
+
+    /// <summary>Catatan kenapa Bus/Kereta tidak muncul (mis. tidak ada rute).</summary>
+    public bool HasTransitStatus => TransitStatusText.Length > 0;
 
     [ObservableProperty]
     private bool _hasResult;
@@ -111,9 +121,75 @@ public partial class CariRuteViewModel : ObservableObject
             return;
         }
 
+        var selected = ModeOptions.Where(o => o.IsSelected).ToList();
+        bool wantsBus = selected.Any(o => IsBus(o.Mode));
+        bool wantsTrain = selected.Any(o => IsTrain(o.Mode));
+
+        TransitRouteResult transit = TransitRouteResult.Empty;
+        string? transitError = null;
+
+        if (wantsBus || wantsTrain)
+        {
+            try
+            {
+                transit = await _transitService.GetRoutesAsync(origin, destination);
+            }
+            catch (Exception ex)
+            {
+                transitError = "Gagal mengambil rute transit: " + ex.Message;
+            }
+        }
+
         var trip = new Trip { TripDate = DateTime.Now, Route = route };
-        foreach (ModeOptionViewModel option in ModeOptions.Where(o => o.IsSelected))
+        var transitDetails = new Dictionary<TransportMode, string>();
+        var transitNotes = new List<string>();
+
+        foreach (ModeOptionViewModel option in selected)
+        {
+            if (IsBus(option.Mode))
+            {
+                if (transit.Bus is { } bus)
+                {
+                    trip.AddResult(CreateTransitResult(bus, option.Mode));
+                    transitDetails[option.Mode] = FormatTransitDetail("bus", bus);
+                }
+                else if (transitError is null)
+                {
+                    transitNotes.Add("Bus tidak tersedia untuk rute ini.");
+                }
+
+                continue;
+            }
+
+            if (IsTrain(option.Mode))
+            {
+                if (transit.Train is { } train)
+                {
+                    trip.AddResult(CreateTransitResult(train, option.Mode));
+                    transitDetails[option.Mode] = FormatTransitDetail("kereta", train);
+                }
+                else if (transitError is null)
+                {
+                    transitNotes.Add("Kereta tidak tersedia untuk rute ini.");
+                }
+
+                continue;
+            }
+
             trip.AddResult(_emissionService.Calculate(route, option.Mode));
+        }
+
+        if (transitError is not null)
+            transitNotes.Insert(0, transitError);
+
+        TransitStatusText = string.Join(" ", transitNotes);
+
+        if (trip.Results.Count == 0)
+        {
+            ErrorMessage = "Tidak ada moda yang tersedia untuk rute ini.";
+            HasResult = false;
+            return;
+        }
 
         EmissionResult best = trip.GetBestOption()!;
         double maxKg = trip.Results.Max(r => r.TotalEmissionKg);
@@ -134,7 +210,8 @@ public partial class CariRuteViewModel : ObservableObject
             .Select(r => new ModeComparisonRowViewModel(
                 r,
                 isBest: ReferenceEquals(r, best),
-                ratio: maxKg > 0 ? r.TotalEmissionKg / maxKg : 0))
+                ratio: maxKg > 0 ? r.TotalEmissionKg / maxKg : 0,
+                detail: transitDetails.GetValueOrDefault(r.Mode)))
             .ToList();
 
         _pendingTrip = trip;
@@ -158,6 +235,7 @@ public partial class CariRuteViewModel : ObservableObject
         RecommendationTitle = string.Empty;
         RecommendationDetail = string.Empty;
         ComparisonRows = [];
+        TransitStatusText = string.Empty;
         SimpanCommand.NotifyCanExecuteChanged();
     }
 
@@ -191,5 +269,29 @@ public partial class CariRuteViewModel : ObservableObject
     {
         if (e.PropertyName == nameof(ModeOptionViewModel.IsSelected))
             HitungCommand.NotifyCanExecuteChanged();
+    }
+
+    private static bool IsBus(TransportMode mode) =>
+        mode.Name.Equals("Bus", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsTrain(TransportMode mode) =>
+        mode.Name.Equals("Kereta", StringComparison.OrdinalIgnoreCase);
+
+    private static EmissionResult CreateTransitResult(TransitRouteOption option, TransportMode mode) =>
+        new()
+        {
+            Mode = mode,
+            TotalEmissionKg = mode.CalculateEmission(option.TransitDistanceKm),
+        };
+
+    private static string FormatTransitDetail(string label, TransitRouteOption option)
+    {
+        string transport = option.Lines.Count > 0
+            ? string.Join(" → ", option.Lines)
+            : char.ToUpperInvariant(label[0]) + label[1..];
+
+        return transport +
+               " · " + RouteFormatter.FormatDistance(option.TransitDistanceKm) + " " + label +
+               " + " + RouteFormatter.FormatDistance(option.WalkDistanceKm) + " jalan kaki";
     }
 }

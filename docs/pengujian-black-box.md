@@ -40,7 +40,7 @@ aplikasi bisa dijalankan dengan database dan integrasi API yang berlaku.
 | BB-07 | Cek Rute | Sudah login, `GoogleMaps:ApiKey` berisi key **asli** | Buka menu **Cek Rute**, isi dua alamat valid, klik **Bandingkan emisi** | `Universitas Gadjah Mada, Yogyakarta` dan `Stasiun Tugu Yogyakarta` | Jarak dan durasi tampil, bukan 0, dan mendekati hasil Google Maps | | |
 | BB-08 | Cek Rute | `GoogleMaps:ApiKey` berisi key salah yang **bukan placeholder** | Ganti API key menjadi nilai salah, jalankan ulang aplikasi, coba **Bandingkan emisi** | Dua alamat valid | Pesan error yang jelas tentang API key, bukan jarak 0 | | |
 | BB-09 | Cek Rute | Sudah login, `GoogleMaps:ApiKey` berisi key asli | Buka menu **Cek Rute**, isi alamat yang tidak ada, klik **Bandingkan emisi** | `Alamat Tidak Ada 12345` dan alamat valid | Pesan "rute tidak ditemukan" atau pesan sejenis, bukan jarak 0 | | |
-| BB-10 | Cek Rute | Sudah login, Google Maps aktif; faktor emisi dari master database | Centang semua moda, klik **Bandingkan emisi** | Dua alamat valid, 6 moda | Emisi setiap moda tampil dan rekomendasi menunjukkan moda paling hemat | | |
+| BB-10 | Cek Rute | Sudah login, Google Maps aktif; faktor emisi dari master database | Centang semua moda, klik **Bandingkan emisi** | Dua alamat valid, 6 moda | Emisi setiap moda yang tersedia tampil dan rekomendasi menunjukkan moda paling hemat; Bus/Kereta hanya tampil jika rutenya ada dan jalan kaki ≤ 2 km | | |
 | BB-11 | Riwayat | BB-10 berhasil | Setelah menghitung, klik **Simpan ke riwayat**, lalu buka **Riwayat** | - | Perjalanan muncul di daftar Riwayat dengan jarak dan emisi yang sama | | |
 | BB-12 | Riwayat | Ada minimal satu riwayat | Buka **Riwayat**, pilih satu data, klik **Hapus** | - | Data hilang dari daftar dan tidak muncul setelah aplikasi dibuka ulang | | |
 | BB-13 | Riwayat | Ada minimal satu riwayat | Buka **Riwayat**, klik **Hapus semua** | - | Muncul konfirmasi "Hapus semua riwayat perjalanan? Tindakan ini tidak bisa dibatalkan."; Batal mempertahankan data, OK menghapus semua | | |
@@ -87,6 +87,9 @@ Jumlah: **B** = 6, **S** = 0, **belum dijalankan** = 9.
   masih `GANTI_DENGAN...`, aplikasi memakai fake dan tidak memanggil API.
 - BB-10 memakai faktor emisi dari tabel `transport_modes`, bukan Climatiq.
   Climatiq ditunda.
+- BB-10: Bus dan Kereta hanya muncul jika Routes API mengembalikan rute
+  bus + jalan kaki atau kereta + jalan kaki dengan total jalan kaki ≤ 2 km.
+  Rute campuran bus + kereta tidak dipakai.
 - BB-08 membutuhkan restart aplikasi setelah mengganti key, karena konfigurasi
   dibaca saat aplikasi mulai.
 - BB-14 membutuhkan perjalanan bulan berjalan yang **opsi terbaiknya bukan

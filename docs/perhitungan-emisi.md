@@ -173,6 +173,12 @@ Catatan:
   `FakeRouteService` yang menurunkan jarak 3,0 sampai 24,9 km dari teks asal dan
   tujuan. Angka simulasi itu tidak sesuai kondisi sebenarnya. Lihat
   [`integrasi-api.md`](integrasi-api.md). ⚠️
+- **Jarak mobil, motor, sepeda, dan jalan kaki masih memakai rute referensi.**
+  Bus dan Kereta sudah memakai jarak rute transit masing-masing, tetapi empat
+  moda lainnya masih memakai jarak `DRIVE`. ⚠️
+- **Bus/Kereta hanya tampil jika tersedia.** Rute bus + jalan kaki atau
+  kereta + jalan kaki hanya ditampilkan jika ditemukan dan total jalan kaki
+  ≤ 2 km. Rute campuran bus + kereta tidak dipakai. ✅
 - **Faktor belum diperbarui dari Climatiq (ditunda).** Nilai yang dipakai
   adalah seed `transport_modes`. ❌
 - **Jumlah penumpang tidak diperhitungkan.** Emisi dihitung untuk satu

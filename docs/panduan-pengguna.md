@@ -126,7 +126,12 @@ Setelah perhitungan selesai, panel kanan menampilkan:
   `FakeRouteService`, sehingga jarak **tidak sesuai kondisi sebenarnya**. Lihat
   [`integrasi-api.md`](integrasi-api.md).
 - **Peta belum tersedia.** Rute belum ditampilkan di peta.
-- **Satu jarak untuk semua moda.** Jarak yang sama dipakai untuk setiap moda.
+- **Jarak berbeda per moda.** Bus dan Kereta memakai jarak rute transit
+  masing-masing. Jalan kaki, Mobil, Motor, dan Sepeda masih memakai rute
+  referensi `DRIVE`.
+- **Bus/Kereta tidak dipaksakan muncul.** Moda ini hanya tampil jika ada rute
+  bus + jalan kaki atau kereta + jalan kaki dengan total jalan kaki ≤ 2 km.
+  Jika tidak ada, moda tersebut tidak masuk perbandingan.
 
 ## 6. Riwayat ✅
 

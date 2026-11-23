@@ -48,10 +48,11 @@ CRoute.Tests ──► CRoute.Core
 
 - `CRoute.Core` tidak bergantung ke proyek lain. Di sinilah model
   (`Route`, `TransportMode`, `Trip`, `EmissionResult`, `TripHistory`) dan
-  kontrak (`IRouteService`, `IEmissionService`, `ITripHistoryRepository`,
-  `ITransportModeProvider`, `IAuthService`) berada.
-- `CRoute.Services` berisi `RouteService` dan `EmissionService` (sisi API) serta
-  `ApiSettingsLoader` untuk membaca konfigurasi.
+  kontrak (`IRouteService`, `ITransitRouteService`, `IEmissionService`,
+  `ITripHistoryRepository`, `ITransportModeProvider`, `IAuthService`) berada.
+- `CRoute.Services` berisi `RouteService`, `TransitRouteService`, dan
+  `EmissionService` (sisi API) serta `ApiSettingsLoader` untuk membaca
+  konfigurasi.
 - `CRoute.Data` berisi implementasi PostgreSQL: `PostgresAuthService`,
   `PostgresTransportModeProvider`, `PostgresTripHistoryRepository`.
 - `CRoute.App` berisi tampilan dan logika presentasi. Ia tidak tahu SQL; semua
@@ -73,6 +74,7 @@ CRoute.Tests ──► CRoute.Core
 | `TripHistory` | Daftar trip + target bulanan. `GetMonthlyTotal()`, `GetProgress()` | ✅ |
 | `AppClock` | Waktu acuan aplikasi di zona Asia/Jakarta untuk agregasi bulanan/harian; melempar error jika zona tidak tersedia | ✅ unit test |
 | `IRouteService` | `Task<Route> GetRouteAsync(origin, destination)` | ✅ kontrak |
+| `ITransitRouteService` | `Task<TransitRouteResult> GetRoutesAsync(origin, destination)` | ✅ kontrak |
 | `IEmissionService` | `EmissionResult Calculate(route, mode)` | ✅ kontrak |
 | `ITripHistoryRepository` | `GetHistory`, `AddTrip`, `SetMonthlyTarget`, `ClearTrips` | ✅ kontrak |
 | `ITransportModeProvider` | `GetAll()`, `GetBaseline()` | ✅ kontrak |
@@ -89,6 +91,7 @@ atau black box. Integrasi eksternal yang belum selesai tetap ditandai ⚠️/❌
 | Tipe | Peran | Status |
 |---|---|---|
 | `RouteService` | Memanggil Google Maps Routes API (`computeRoutes`) | ✅ dipakai kalau API key diisi |
+| `TransitRouteService` | Satu request `TRANSIT`, filter Bus/Kereta dan jalan kaki ≤ 2 km | ✅ dipakai kalau API key diisi |
 | `EmissionService` | Kerangka integrasi Climatiq (`Calculate` placeholder + `RefreshEmissionFactorAsync`) | ❌ ditunda; belum dipasang |
 | `ApiSettingsLoader` | Membaca `appsettings.json`, `appsettings.local.json`, dan env `CROUTE_*` | ✅ |
 | `ApiSettings`, `GoogleMapsSettings`, `ClimatiqSettings`, `DatabaseSettings` | Model konfigurasi | ✅ |
@@ -120,7 +123,7 @@ Lihat [`docs/database/README.md`](database/README.md).
 | Helper presentasi | `EmissionSavings` (hitung hemat vs baseline Mobil, dipakai Cek Rute, Dashboard, Statistik) | ✅ |
 | View | `LoginWindow`, `RegisterWindow`, `MainWindow`, `DashboardView`, `CariRuteView`, `HistoryView`, `StatsView` | ✅ |
 | Converter | Formatter emisi (`EmissionResultFormatter`, `RouteFormatter`), konversi ikon, level warna, dll. | ✅ |
-| Fakes | `FakeRouteService`, `FakeAuthService`, `FakeTransportModeProvider`, `FakeTripHistoryRepository` | ✅ sebagai simulasi/uji |
+| Fakes | `FakeRouteService`, `FakeTransitRouteService`, `FakeAuthService`, `FakeTransportModeProvider`, `FakeTripHistoryRepository` | ✅ sebagai simulasi/uji |
 | Peta (WebView2 / Embed) | Belum ada di View. Paket `Microsoft.Web.WebView2` sudah terpasang | ❌ |
 
 ## 4. Pola MVVM dan navigasi
@@ -146,6 +149,7 @@ Lihat [`docs/database/README.md`](database/README.md).
 | `ITransportModeProvider` | `PostgresTransportModeProvider` | ✅ nyata |
 | `ITripHistoryRepository` | `PostgresTripHistoryRepository` | ✅ nyata |
 | `IRouteService` | `RouteService` (kalau `GoogleMaps:ApiKey` diisi), selain itu `FakeRouteService` | ✅ / ⚠️ simulasi tanpa key |
+| `ITransitRouteService` | `TransitRouteService` (kalau key diisi), selain itu `FakeTransitRouteService` | ✅ / ⚠️ kosong tanpa key |
 | `IEmissionService` | `LocalEmissionService` (faktor dari tabel `transport_modes`) | ✅ perhitungan lokal; Climatiq ditunda |
 | `IDialogService` | `DialogService` | ✅ |
 | `IWindowService` | `WindowService` | ✅ |
@@ -156,12 +160,15 @@ Komposisi yang dipakai sekarang:
 _routeService = settings.GoogleMaps.HasApiKey
     ? new RouteService(Http, settings)
     : new FakeRouteService();
+_transitService = settings.GoogleMaps.HasApiKey
+    ? new TransitRouteService(Http, settings)
+    : new FakeTransitRouteService();
 _emissionService = new LocalEmissionService(); // Climatiq ditunda
 ```
 
 Lihat [`integrasi-api.md`](integrasi-api.md) untuk status dan batasan integrasi.
-`RouteService` sudah memakai Routes API; tanpa API key aplikasi memakai
-`FakeRouteService`.
+`RouteService` dan `TransitRouteService` sudah memakai Routes API; tanpa API key
+aplikasi memakai implementasi fake.
 
 ## 6. Alur data utama
 
@@ -171,8 +178,10 @@ Lihat [`integrasi-api.md`](integrasi-api.md) untuk status dan batasan integrasi.
 CariRuteView ──(Bandingkan emisi)──► CariRuteViewModel.HitungAsync
     │
     ├─ validasi: asal/tujuan tidak kosong, tidak sama, ≥1 moda dipilih
-    ├─ IRouteService.GetRouteAsync(asal, tujuan)           → Route
+    ├─ IRouteService.GetRouteAsync(asal, tujuan)           → Route referensi
+    ├─ ITransitRouteService.GetRoutesAsync(...)            → Bus/Kereta (opsional)
     ├─ IEmissionService.Calculate(route, moda) per moda    → EmissionResult[]
+    │     Bus/Kereta memakai jarak transit hasil filter 2 km
     ├─ Trip { Route, Results } → GetBestOption()           → rekomendasi
     └─ tampilkan hasil (belum tersimpan, _pendingTrip)
           │

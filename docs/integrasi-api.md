@@ -122,13 +122,22 @@ Catatan dari dokumentasi resmi:
 - Aktifkan **Routes API** (bukan Roads API) dan batasi key hanya ke API itu.
 - Simpan key di `appsettings.local.json`, jangan di `appsettings.json`.
 
-### 3.6 Hal yang belum diputuskan
+### 3.6 Mode perjalanan (diperbarui 23 November 2026)
 
-- **Mode perjalanan.** Request memakai `travelMode: "DRIVE"`. Desain CRoute memakai
-  **satu jarak untuk semua moda** (lihat `perhitungan-emisi.md`), jadi jarak
-  mengemudi dipakai juga untuk motor, bus, kereta, sepeda, dan jalan kaki. Ini
-  perlu diakui sebagai batasan atau diganti dengan jarak per moda.
-- **Durasi per moda.** Durasi juga hanya dari satu mode.
+- Rute utama tetap memakai `travelMode: "DRIVE"` untuk Jalan kaki, Mobil,
+  Motor, dan Sepeda. Ini masih menjadi batasan yang diketahui.
+- **Bus dan Kereta** sekarang dicek lewat satu request `travelMode: "TRANSIT"`:
+  - Bus hanya diterima jika seluruh langkah transitnya bus dan total jalan kaki
+    akses/egress/transfer **≤ 2 km**.
+  - Kereta hanya diterima jika seluruh langkah transitnya rail dan total jalan
+    kaki **≤ 2 km**.
+  - Rute campuran bus + kereta ditolak untuk kedua mode.
+  - `allowedTravelModes` hanya preferensi, bukan filter keras; penyaringan
+    dilakukan di aplikasi berdasarkan `transitLine.vehicle.type`.
+- Jika tidak ada rute yang memenuhi syarat, Bus/Kereta tidak ditampilkan dan
+  tidak dihitung sebagai emisi 0.
+- Emisi Bus/Kereta memakai jarak langkah transit masing-masing, bukan jarak
+  rute DRIVE. Durasi juga diambil dari rute transit.
 
 ## 4. Google Maps Embed (peta)
 
