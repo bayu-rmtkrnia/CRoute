@@ -51,7 +51,8 @@ public sealed class PostgresTripHistoryRepository : ITripHistoryRepository
                    tm.transport_mode_id,
                    tm.name,
                    tm.icon,
-                   er.emission_factor
+                   er.emission_factor,
+                   t.chosen_mode_id
             FROM trips t
             JOIN routes r ON r.trip_id = t.trip_id
             LEFT JOIN emission_results er ON er.trip_id = t.trip_id
@@ -87,6 +88,7 @@ public sealed class PostgresTripHistoryRepository : ITripHistoryRepository
                             DistanceKm = (double)reader.GetDecimal(5),
                             DurationMin = reader.GetInt32(6),
                         },
+                        ChosenModeId = reader.IsDBNull(13) ? null : reader.GetGuid(13),
                     };
 
                     trips.Add(tripId, trip);
@@ -144,7 +146,8 @@ public sealed class PostgresTripHistoryRepository : ITripHistoryRepository
                 @distance_km,
                 @duration,
                 @results::jsonb,
-                @date)
+                @date,
+                @chosen_mode_id)
             """, connection);
 
         command.Parameters.AddWithValue("user_id", UserId);
@@ -161,6 +164,11 @@ public sealed class PostgresTripHistoryRepository : ITripHistoryRepository
         command.Parameters.Add(new NpgsqlParameter("results", NpgsqlDbType.Jsonb)
         {
             Value = resultsJson,
+        });
+
+        command.Parameters.Add(new NpgsqlParameter("chosen_mode_id", NpgsqlDbType.Uuid)
+        {
+            Value = trip.ChosenModeId is Guid chosenModeId ? chosenModeId : DBNull.Value,
         });
 
         // Function mengembalikan UUID trip. ID ini dibuat database,

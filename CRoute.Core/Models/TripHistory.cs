@@ -36,7 +36,8 @@ public class TripHistory
     }
 
     /// <summary>
-    /// Total emisi bulan berjalan, dihitung dari opsi terbaik tiap perjalanan.
+    /// Total emisi bulan berjalan, dihitung dari opsi yang dipilih pengguna
+    /// tiap perjalanan. Data lama tanpa pilihan memakai opsi terbaik.
     /// Perjalanan yang belum punya hasil emisi dianggap 0.
     /// </summary>
     public double GetMonthlyTotal()
@@ -61,7 +62,7 @@ public class TripHistory
             if (tripDate.Year != year || tripDate.Month != month)
                 continue;
 
-            total += trip.GetBestOption()?.TotalEmissionKg ?? 0;
+            total += trip.GetChosenOption()?.TotalEmissionKg ?? 0;
         }
 
         return total;

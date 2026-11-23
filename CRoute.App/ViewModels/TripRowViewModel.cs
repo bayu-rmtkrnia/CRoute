@@ -15,11 +15,11 @@ public class TripRowViewModel
         ArgumentNullException.ThrowIfNull(baseline);
 
         Trip = trip;
-        BestResult = trip.GetBestOption();
+        ChosenResult = trip.GetChosenOption();
 
         Subtitle = trip.TripDate.ToString("d MMM", DisplayCulture.Indonesian) + "  ·  " +
                    RouteFormatter.FormatDistance(trip.Route.DistanceKm) + "  ·  " +
-                   (BestResult?.Mode.Name ?? "-");
+                   (ChosenResult?.Mode.Name ?? "-");
 
         double saved = EmissionSavings.ForTrip(trip, baseline);
         SavedText = saved > 0 ? "hemat " + EmissionResultFormatter.FormatKg(saved) : string.Empty;
@@ -29,10 +29,10 @@ public class TripRowViewModel
 
     public Route Route => Trip.Route;
 
-    /// <summary>Moda yang dipilih (emisi terendah) pada perjalanan ini.</summary>
-    public EmissionResult? BestResult { get; }
+    /// <summary>Moda yang dipilih pengguna pada perjalanan ini (fallback opsi terbaik untuk data lama).</summary>
+    public EmissionResult? ChosenResult { get; }
 
-    public string? IconName => BestResult?.Mode.IconName;
+    public string? IconName => ChosenResult?.Mode.IconName;
 
     public string Subtitle { get; }
 

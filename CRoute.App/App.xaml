@@ -310,7 +310,7 @@
                                    Foreground="{StaticResource MutedBrush}" Margin="0,2,0,0"/>
                     </StackPanel>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
-                        <TextBlock Text="{Binding BestResult, Converter={StaticResource EmissionResultFormatter}}" FontWeight="Bold" HorizontalAlignment="Right"
+                        <TextBlock Text="{Binding ChosenResult, Converter={StaticResource EmissionResultFormatter}}" FontWeight="Bold" HorizontalAlignment="Right"
                                    Foreground="{StaticResource DeepGreenBrush}"/>
                         <TextBlock Text="{Binding SavedText}" FontSize="11" HorizontalAlignment="Right"
                                    Foreground="{StaticResource MidGreenBrush}"/>

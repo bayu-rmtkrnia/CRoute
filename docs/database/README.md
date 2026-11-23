@@ -9,8 +9,19 @@ Skrip siap pakai ada di:
 - `supabase.md` — langkah memakai Supabase (connection string, key, role, SSL, RLS).
 - `supabase-croute-role.sql` — role `croute` + grant untuk Supabase.
 - `migration-minimal-target.sql` — migrasi database lama ke struktur minimal target.
+- `migration-chosen-mode.sql` — migrasi `fn_save_trip` agar menerima `chosen_mode_id`
+  (versi aman untuk role aplikasi `croute` di Supabase hosted).
 - `target-alignment-plan.md` — rencana penyesuaian skema agar ≥70% mirip dengan target
   `ROUTE`/`TRANSPORT_MODE`/`TRIP`/`EMISSION_RESULT`/`SETTING` (multi-user tetap).
+
+> **Catatan Supabase hosted.** Role aplikasi `croute` bukan owner
+> `v_trip_summary` maupun function agregasi lama. Karena itu
+> `migration-chosen-mode.sql` hanya menambahkan overload
+> `fn_save_trip(..., p_chosen_mode_id)` dan view `v_trip_chosen_result`.
+> Aplikasi WPF sudah memakai `chosen_mode_id` lewat C#. Supaya function
+> agregasi SQL di database hosted juga memakai opsi terpilih, jalankan
+> `schema.sql`/`functions.sql` sebagai owner database (mis. lewat Supabase SQL
+> Editor dengan role postgres).
 
 ## 1. Ringkasan fitur UI → data
 
@@ -19,21 +30,21 @@ Skrip siap pakai ada di:
 | Login | username + password | `users` (`password_hash`, `password_salt`) |
 | Register | nama lengkap, username, password | `users` + baris awal `settings` |
 | Dashboard — sapaan | nama depan pengguna | `users.full_name` |
-| Dashboard — emisi bulan ini | total emisi opsi terbaik bulan berjalan | `fn_current_month_total()` |
+| Dashboard — emisi bulan ini | total emisi opsi terpilih bulan berjalan | `fn_current_month_total()` |
 | Dashboard — hemat vs mobil | total penghematan seluruh perjalanan | `fn_total_saved()` |
 | Dashboard — jumlah perjalanan | count seluruh trip | `fn_trip_count()` |
 | Dashboard — target bulanan | total / target, persentase, status | `fn_current_month_total()` + `settings` (`monthly_target_kg`) |
-| Dashboard — 3 perjalanan terakhir | rute, tanggal, jarak, moda terbaik, hemat | `fn_recent_trips(3)` |
+| Dashboard — 3 perjalanan terakhir | rute, tanggal, jarak, moda terpilih, hemat | `fn_recent_trips(3)` |
 | Cek Rute — daftar moda | nama, ikon, faktor emisi | `transport_modes` (`is_active = true`) |
 | Cek Rute — hasil per bandingan | emisi tiap moda | dihitung lokal; disimpan ke `emission_results` |
-| Cek Rute — simpan | satu trip + rute + semua hasil emisi | `fn_save_trip()` (atomik) |
+| Cek Rute — simpan | satu trip + rute + semua hasil + mode terpilih | `fn_save_trip(..., p_chosen_mode_id)` (atomik) |
 | Riwayat | semua trip, urut terbaru | `v_trip_summary` |
 | Riwayat — hapus semua | hapus trip milik pengguna | `fn_clear_trips()` |
 | Statistik — total bulan ini | sama dengan Dashboard | `fn_current_month_total()` |
 | Statistik — progress target | total / target | `fn_monthly_progress()` |
 | Statistik — total hemat | seluruh trip | `fn_total_saved()` |
-| Statistik — rata-rata per trip | rata-rata emisi opsi terbaik | `fn_average_per_trip()` |
-| Statistik — moda favorit | moda terbaik yang paling sering muncul | `fn_favorite_mode()` |
+| Statistik — rata-rata per trip | rata-rata emisi opsi terpilih | `fn_average_per_trip()` |
+| Statistik — moda favorit | moda terpilih yang paling sering muncul | `fn_favorite_mode()` |
 | Statistik — grafik 7 hari | emisi per hari, hari kosong = 0 | `fn_daily_emissions(7)` |
 
 ## 2. ERD
@@ -149,7 +160,8 @@ diperbarui dari Climatiq tanpa mengubah kode.
 ### `trips`
 Satu perjalanan yang disimpan pengguna. Relasi ke `users` (cascade saat user
 dihapus). `date` adalah waktu kejadian, bukan waktu insert. `chosen_mode_id`
-menyimpan mode terpilih (nullable).
+menyimpan moda yang **benar-benar dipakai pengguna** (nullable). Data lama yang
+belum punya pilihan dianggap memakai opsi terbaik saat dibaca.
 
 ### `routes`
 Detail rute milik satu trip. Relasi 1:1 lewat `routes.trip_id UNIQUE`, dengan
@@ -184,9 +196,11 @@ faktor diperbarui.
 7. **Password PBKDF2 di aplikasi, bukan di database.** Database hanya menyimpan
    hash + salt. Verifikasi dilakukan di C# memakai
    `Rfc2898DeriveBytes.Pbkdf2`, sama seperti `FakeAuthService` sekarang.
-8. **Agregat di database.** Dashboard dan Statistik tidak perlu memuat seluruh
-   trip ke memori; cukup memanggil function. Ini penting saat riwayat sudah
-   panjang.
+8. **Agregat tersedia di SQL, saat ini dihitung di C#.** Function SQL sudah
+   disiapkan untuk Dashboard/Statistik, tetapi implementasi WPF sekarang memuat
+   `GetHistory()` dan menghitung di memori memakai `Trip.GetChosenOption()`
+   (fallback opsi terbaik untuk data lama). Function SQL memakai kolom
+   `chosen_*` yang sama, jadi hasilnya konsisten saat nanti dipindahkan ke DB.
 9. **Session tidak disimpan di database.** Aplikasi desktop menyimpan user yang
    sedang login di memori (`IAuthService`). Kalau nanti ada API/server, baru
    tambahkan tabel `sessions` atau refresh token.

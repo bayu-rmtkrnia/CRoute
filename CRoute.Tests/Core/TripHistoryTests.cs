@@ -13,9 +13,9 @@ public class TripHistoryTests
         DurationMin = 30,
     };
 
-    private static TransportMode CreateMode(double factor = 0.171) => new()
+    private static TransportMode CreateMode(double factor = 0.171, string name = "Mobil") => new()
     {
-        Name = "Mobil",
+        Name = name,
         EmissionFactor = factor,
         IconName = "car",
     };
@@ -104,6 +104,49 @@ public class TripHistoryTests
         });
 
         Assert.Equal(0, history.GetMonthlyTotal(2026, 11));
+    }
+
+    [Fact]
+    public void GetMonthlyTotal_MemakaiOpsiDipilih_BukanOpsiTerbaik()
+    {
+        var history = new TripHistory();
+        var trip = new Trip
+        {
+            TripDate = new DateTime(2026, 11, 15),
+            Route = CreateRoute(),
+        };
+
+        TransportMode bus = CreateMode(0.089, "Bus");
+        TransportMode car = CreateMode();
+
+        trip.AddResult(new EmissionResult { Mode = bus, TotalEmissionKg = 0.28 });
+        trip.AddResult(new EmissionResult { Mode = car, TotalEmissionKg = 0.63 });
+        trip.ChosenModeId = car.Id;
+
+        history.AddTrip(trip);
+
+        Assert.Equal(0.63, history.GetMonthlyTotal(2026, 11), 10);
+    }
+
+    [Fact]
+    public void GetMonthlyTotal_TanpaPilihan_MemakaiOpsiTerbaik()
+    {
+        var history = new TripHistory();
+        var trip = new Trip
+        {
+            TripDate = new DateTime(2026, 11, 15),
+            Route = CreateRoute(),
+        };
+
+        TransportMode car = CreateMode();
+        TransportMode bus = CreateMode(0.089, "Bus");
+
+        trip.AddResult(new EmissionResult { Mode = car, TotalEmissionKg = 0.63 });
+        trip.AddResult(new EmissionResult { Mode = bus, TotalEmissionKg = 0.28 });
+
+        history.AddTrip(trip);
+
+        Assert.Equal(0.28, history.GetMonthlyTotal(2026, 11), 10);
     }
 
     [Fact]

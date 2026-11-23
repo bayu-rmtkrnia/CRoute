@@ -54,7 +54,8 @@ untuk multi-user (`user_id`) tetap ada dan tidak menghilangkan kolom target.
    - `user_id` adalah tambahan multi-user.
    - `is_favorite` dan `label` mengikuti target.
 3. **`trips` mendapat `route_id` dan `chosen_mode_id`.**
-   - `chosen_mode_id` nullable, diisi mode terbaik saat trip disimpan.
+   - `chosen_mode_id` nullable, diisi moda yang benar-benar dipakai pengguna.
+     Kalau null (data lama), pembacaan memakai opsi terbaik sebagai fallback.
 4. **`emission_results` mendapat `distance_km` dan `duration`.**
    - Target menyimpan jarak/durasi per hasil emisi (per mode).
    - `routes.distance_km`/`duration_min` tetap dipertahankan sementara sebagai
@@ -288,7 +289,7 @@ Perubahan logika:
    Nilai diambil dari item JSON; kalau tidak ada, fallback ke
    `p_distance_km`/`p_duration_min`.
 5. Kalau `p_chosen_mode_id` null, hitung mode terbaik dari hasil yang baru
-   dimasukkan dan update `trips.chosen_mode_id`.
+   dimasukkan dan update `trips.chosen_mode_id` sebagai fallback data lama.
 
 Signature yang disarankan:
 
@@ -410,7 +411,8 @@ $$;
   - `origin`, `destination`, `distance_km`, `duration_min` tetap diambil dari
     `routes` untuk model `Route` yang sekarang.
 - `AddTrip`:
-  - panggil `fn_save_trip` dengan `chosen_mode_id = trip.GetBestOption()?.Mode.Id`;
+  - panggil `fn_save_trip` dengan `chosen_mode_id = trip.GetChosenOption()?.Mode.Id`
+    (atau `trip.ChosenModeId`); UI mewajibkan pilihan sebelum simpan;
   - JSON hasil boleh menyertakan `distance_km`/`duration`.
 - `SetMonthlyTarget` dan `ClearTrips`: signature function tidak berubah, jadi
   kode C# tidak perlu diubah selain penyesuaian di atas.
@@ -503,7 +505,7 @@ Kalau penilaian memakai **nama tabel/kolom persis**, tambahan opsi:
 |---|---|
 | Backfill `routes.user_id` gagal karena ada rute tanpa trip | Rute selalu dibuat bersama trip saat ini; validasi dengan query `NOT EXISTS` sebelum `SET NOT NULL` |
 | `DROP routes.trip_id` memutus view/function | Drop/recreate `v_trip_summary` dan function terkait dalam transaksi yang sama |
-| `chosen_mode_id` tidak konsisten dengan hasil emisi | Isi dari hasil terendah; validasi di `fn_save_trip` dan trigger opsional |
+| `chosen_mode_id` tidak konsisten dengan hasil emisi | Validasi di `fn_save_trip` bahwa moda pilihan ada di `emission_results`; fallback ke hasil terendah hanya kalau null |
 | `distance_km`/`duration` dobel di `routes` dan `emission_results` | Jadikan `routes` sebagai nilai default; `emission_results` sebagai nilai per-mode; hapus nanti setelah UI mendukung per-mode |
 | `settings.value` berupa teks | Validasi angka di `fn_set_monthly_target`; cast dengan aman |
 | Rute favorit terhapus saat clear | `fn_clear_trips` hanya menghapus rute orphan non-favorit |

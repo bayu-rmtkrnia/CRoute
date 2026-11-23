@@ -40,8 +40,8 @@ aplikasi bisa dijalankan dengan database dan integrasi API yang berlaku.
 | BB-07 | Cek Rute | Sudah login, `GoogleMaps:ApiKey` berisi key **asli** | Buka menu **Cek Rute**, isi dua alamat valid, klik **Bandingkan emisi** | `Universitas Gadjah Mada, Yogyakarta` dan `Stasiun Tugu Yogyakarta` | Jarak dan durasi tampil, bukan 0, dan mendekati hasil Google Maps | | |
 | BB-08 | Cek Rute | `GoogleMaps:ApiKey` berisi key salah yang **bukan placeholder** | Ganti API key menjadi nilai salah, jalankan ulang aplikasi, coba **Bandingkan emisi** | Dua alamat valid | Pesan error yang jelas tentang API key, bukan jarak 0 | | |
 | BB-09 | Cek Rute | Sudah login, `GoogleMaps:ApiKey` berisi key asli | Buka menu **Cek Rute**, isi alamat yang tidak ada, klik **Bandingkan emisi** | `Alamat Tidak Ada 12345` dan alamat valid | Pesan "rute tidak ditemukan" atau pesan sejenis, bukan jarak 0 | | |
-| BB-10 | Cek Rute | Sudah login, Google Maps aktif; faktor emisi dari master database | Centang semua moda, klik **Bandingkan emisi** | Dua alamat valid, 6 moda | Emisi setiap moda yang tersedia tampil dan rekomendasi menunjukkan moda paling hemat; Bus/Kereta hanya tampil jika rutenya ada dan jalan kaki ≤ 2 km | | |
-| BB-11 | Riwayat | BB-10 berhasil | Setelah menghitung, klik **Simpan ke riwayat**, lalu buka **Riwayat** | - | Perjalanan muncul di daftar Riwayat dengan jarak dan emisi yang sama | | |
+| BB-10 | Cek Rute | Sudah login, Google Maps aktif; faktor emisi dari master database | Centang semua moda, klik **Bandingkan emisi**, lalu pilih satu moda | Dua alamat valid, 6 moda | Emisi setiap moda yang tersedia tampil dan rekomendasi menunjukkan moda paling hemat; Bus/Kereta hanya tampil jika rutenya ada dan jalan kaki ≤ 2 km; tombol simpan baru aktif setelah satu moda dipilih | | |
+| BB-11 | Riwayat | BB-10 berhasil, satu moda sudah dipilih | Klik **Simpan ke riwayat**, lalu buka **Riwayat** | - | Perjalanan muncul di daftar Riwayat dengan moda dan emisi yang dipilih, bukan otomatis moda terbaik | | |
 | BB-12 | Riwayat | Ada minimal satu riwayat | Buka **Riwayat**, pilih satu data, klik **Hapus** | - | Data hilang dari daftar dan tidak muncul setelah aplikasi dibuka ulang | | |
 | BB-13 | Riwayat | Ada minimal satu riwayat | Buka **Riwayat**, klik **Hapus semua** | - | Muncul konfirmasi "Hapus semua riwayat perjalanan? Tindakan ini tidak bisa dibatalkan."; Batal mempertahankan data, OK menghapus semua | | |
 | BB-14 | Statistik | Ada perjalanan bulan ini | Buka **Statistik & Target**, atur target sehingga pemakaian sekitar 70%, lalu sekitar 100%, klik **Simpan target** | Target = total bulanan / 0,7 lalu target = total bulanan | 70% sampai <100% menampilkan "Hampir mencapai target, pilih moda yang lebih hemat."; ≥100% menampilkan "Target bulan ini sudah terlampaui." | | |
@@ -92,7 +92,13 @@ Jumlah: **B** = 6, **S** = 0, **belum dijalankan** = 9.
   Rute campuran bus + kereta tidak dipakai.
 - BB-08 membutuhkan restart aplikasi setelah mengganti key, karena konfigurasi
   dibaca saat aplikasi mulai.
-- BB-14 membutuhkan perjalanan bulan berjalan yang **opsi terbaiknya bukan
-  Sepeda/Jalan kaki**, karena emisi terbaik kedua moda itu 0 dan target tidak
-  akan pernah tercapai. Pilih hanya moda Mobil saat menghitung jika perlu.
+- BB-14 membutuhkan perjalanan bulan berjalan yang **moda terpilihnya bukan
+  Sepeda/Jalan kaki**, karena emisi kedua moda itu 0 dan target tidak akan
+  pernah tercapai. Pilih Mobil saat menyimpan jika perlu.
+- BB-11/BB-14 memakai moda yang **dipilih pengguna**, bukan otomatis opsi
+  terbaik. Data lama tanpa pilihan tetap memakai opsi terbaik sebagai fallback.
 - BB-15 membutuhkan akses SQL Editor Supabase atau `psql`.
+- BB-15: di database hosted, `fn_current_month_total` masih memakai opsi
+  terbaik sampai owner database menjalankan `schema.sql`/`functions.sql` versi
+  baru. Aplikasi sudah memakai opsi terpilih. Untuk sementara, bandingkan
+  Dashboard dengan query chosen-aware atau jalankan migrasi sebagai owner.

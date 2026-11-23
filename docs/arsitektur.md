@@ -70,7 +70,7 @@ CRoute.Tests ──► CRoute.Core
 | `TransportMode` | Moda + faktor emisi (kg CO₂/km). `CalculateEmission(km)` = `km × EmissionFactor` | ✅ |
 | `Route` | Origin, destination, jarak (km), durasi (menit) | ✅ |
 | `EmissionResult` | Total emisi (kg) + moda yang dipakai | ✅ |
-| `Trip` | Satu perjalanan: tanggal, rute, daftar hasil emisi. `GetBestOption()` = emisi terkecil | ✅ |
+| `Trip` | Satu perjalanan: tanggal, rute, daftar hasil emisi, `ChosenModeId`. `GetBestOption()` = emisi terkecil; `GetChosenOption()` = pilihan pengguna dengan fallback opsi terbaik | ✅ |
 | `TripHistory` | Daftar trip + target bulanan. `GetMonthlyTotal()`, `GetProgress()` | ✅ |
 | `AppClock` | Waktu acuan aplikasi di zona Asia/Jakarta untuk agregasi bulanan/harian; melempar error jika zona tidak tersedia | ✅ unit test |
 | `IRouteService` | `Task<Route> GetRouteAsync(origin, destination)` | ✅ kontrak |
@@ -183,13 +183,16 @@ CariRuteView ──(Bandingkan emisi)──► CariRuteViewModel.HitungAsync
     ├─ IEmissionService.Calculate(route, moda) per moda    → EmissionResult[]
     │     Bus/Kereta memakai jarak transit hasil filter 2 km
     ├─ Trip { Route, Results } → GetBestOption()           → rekomendasi
+    ├─ pengguna memilih satu moda → ChosenModeId
     └─ tampilkan hasil (belum tersimpan, _pendingTrip)
           │
-          └─(Simpan)──► ITripHistoryRepository.AddTrip(trip)
-                          └─ SELECT fn_save_trip(user, origin, dest, km, menit, results::jsonb, tanggal)
+          └─(Simpan, wajib ada pilihan)──► ITripHistoryRepository.AddTrip(trip)
+                          └─ SELECT fn_save_trip(user, origin, dest, km, menit, results::jsonb, tanggal, chosen_mode_id)
 ```
 
-`fn_save_trip` menyimpan trip, rute, dan semua hasil emisi dalam satu transaksi.
+`fn_save_trip` menyimpan trip, rute, semua hasil emisi, dan moda pilihan dalam
+satu transaksi. Kalau `chosen_mode_id` null (klien/data lama), function memakai
+opsi terbaik sebagai fallback.
 
 ### 6.2 Dashboard dan Statistik
 
@@ -197,9 +200,9 @@ CariRuteView ──(Bandingkan emisi)──► CariRuteViewModel.HitungAsync
 ITripHistoryRepository.GetHistory()
   └─ SELECT trip + route + emission_results + transport_modes (WHERE user_id)
         └─ TripHistory (di memori)
-              ├─ GetMonthlyTotal()   → total bulan berjalan
+              ├─ GetMonthlyTotal()   → total opsi terpilih bulan berjalan
               ├─ GetProgress()       → total / target
-              └─ EmissionSavings     → hemat vs Mobil
+              └─ EmissionSavings     → hemat vs Mobil dari opsi terpilih
 ```
 
 Saat ini agregasi dilakukan di memori dari `GetHistory()`. Function SQL

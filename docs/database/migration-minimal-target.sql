@@ -6,6 +6,8 @@
 --
 -- Setelah file ini, WAJIB jalankan versi terbaru:
 --   psql ... -f docs/database/functions.sql
+-- Untuk database hosted yang role aplikasinya bukan owner function/view,
+-- jalankan docs/database/migration-chosen-mode.sql (versi aman role aplikasi).
 --
 -- Perubahan:
 --   - nama kolom disamakan dengan tabel target

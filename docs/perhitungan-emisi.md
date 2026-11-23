@@ -83,37 +83,51 @@ Penghematan dibanding mobil (rumus di bagian 4):
 Jika belum ada hasil, hasilnya `null`.
 
 Rekomendasi di Cek Rute ✅ selalu berasal dari opsi ini, hanya dari moda yang
-dicentang.
+dicentang. Opsi terbaik **tidak otomatis menjadi riwayat**; pengguna memilih
+satu moda yang benar-benar dipakai (lihat 4.2).
 
 ### 4.2 Penghematan vs baseline
 
+Rekomendasi di Cek Rute:
+
 ```
-hemat = max(0, E_mobil − E_opsi_terbaik)
+hemat_rekomendasi = max(0, E_mobil − E_opsi_terbaik)
+```
+
+Riwayat, Dashboard, dan Statistik:
+
+```
+hemat_aktual = max(0, E_mobil − E_opsi_terpilih)
 ```
 
 - Implementasi: `EmissionSavings.Calculate(route, chosen, baseline)` ✅
+- `EmissionSavings.ForTrip` memakai `Trip.GetChosenOption()`, yaitu moda yang
+  dipilih pengguna. Untuk data lama tanpa pilihan, hasilnya fallback ke opsi
+  terbaik.
 - `E_mobil` dihitung ulang dari jarak rute dan faktor baseline. Mobil tidak
   harus dicentang oleh pengguna.
-- Nilai negatif dipotong menjadi 0, misalnya jika opsi terbaik ternyata Mobil.
+- Nilai negatif dipotong menjadi 0, misalnya jika opsi terpilih ternyata Mobil.
 - Teks rekomendasi memakai "hemat X kg dibanding mobil" jika `hemat > 0`, dan
   "terendah dari moda yang kamu pilih" jika tidak ✅.
 
 ## 5. Agregasi Dashboard dan Statistik
 
-Semua agregasi memakai **opsi terbaik per perjalanan**, bukan jumlah semua moda.
-Data diambil dari `ITripHistoryRepository.GetHistory()` lalu dihitung di memori.
-Bulan dan hari mengikuti zona **Asia/Jakarta** lewat `AppClock`, bukan zona waktu
-komputer pengguna.
+Semua agregasi memakai **opsi terpilih per perjalanan** (`chosen_mode_id`),
+bukan opsi terbaik otomatis. Data lama yang belum punya pilihan memakai opsi
+terbaik sebagai fallback, sehingga angka historisnya tidak berubah. Data diambil
+dari `ITripHistoryRepository.GetHistory()` lalu dihitung di memori. Bulan dan
+hari mengikuti zona **Asia/Jakarta** lewat `AppClock`, bukan zona waktu komputer
+pengguna.
 
 | Angka di UI | Rumus | Implementasi | Status |
 |---|---|---|---|
-| Emisi bulan ini | Jumlah `best(trip)` untuk trip dengan bulan dan tahun berjalan | `TripHistory.GetMonthlyTotal()` | ✅ |
+| Emisi bulan ini | Jumlah `chosen(trip)` untuk trip dengan bulan dan tahun berjalan | `TripHistory.GetMonthlyTotal()` | ✅ |
 | Persentase target | `GetMonthlyTotal() ÷ MonthlyTargetKg`, dikali 100 | `TripHistory.GetProgress()` | ✅ |
 | Bar target (maks 100%) | `min(persen, 100)` | `StatsViewModel.Refresh` | ✅ |
 | Hemat vs mobil | Jumlah `EmissionSavings.ForTrip` semua trip | `DashboardViewModel`, `StatsViewModel` | ✅ |
-| Rata-rata per perjalanan | Rata-rata `best(trip)` | `StatsViewModel.Refresh` | ✅ |
-| Moda favorit | Moda yang paling sering menjadi opsi terbaik | `StatsViewModel.Refresh` | ✅ |
-| Grafik 7 hari | Jumlah `best(trip)` per hari, 6 hari lalu sampai hari ini | `StatsViewModel.BuildDailyBars` | ✅ |
+| Rata-rata per perjalanan | Rata-rata `chosen(trip)` | `StatsViewModel.Refresh` | ✅ |
+| Moda favorit | Moda yang paling sering dipilih pengguna | `StatsViewModel.Refresh` | ✅ |
+| Grafik 7 hari | Jumlah `chosen(trip)` per hari, 6 hari lalu sampai hari ini | `StatsViewModel.BuildDailyBars` | ✅ |
 
 ### 5.1 Status target
 

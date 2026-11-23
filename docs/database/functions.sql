@@ -11,7 +11,7 @@ BEGIN;
 -- AGREGASI BULANAN
 -- -----------------------------------------------------------------------------
 
--- Total emisi (opsi terbaik tiap trip) untuk satu bulan tertentu.
+-- Total emisi (opsi terpilih tiap trip) untuk satu bulan tertentu.
 CREATE OR REPLACE FUNCTION fn_monthly_total(
     p_user_id UUID,
     p_year    INTEGER,
@@ -21,7 +21,7 @@ RETURNS NUMERIC(12,4)
 LANGUAGE sql
 STABLE
 AS $$
-    SELECT COALESCE(SUM(s.best_emission_kg), 0)::NUMERIC(12,4)
+    SELECT COALESCE(SUM(s.chosen_emission_kg), 0)::NUMERIC(12,4)
     FROM v_trip_summary s
     WHERE s.user_id = p_user_id
       AND s.trip_date_local >= make_date(p_year, p_month, 1)
@@ -66,7 +66,8 @@ $$;
 -- AGREGASI SELURUH RIWAYAT
 -- -----------------------------------------------------------------------------
 
--- Total penghematan dibanding moda baseline (mobil), seluruh trip.
+-- Total penghematan dibanding moda baseline (mobil), memakai opsi terpilih,
+-- untuk seluruh trip.
 CREATE OR REPLACE FUNCTION fn_total_saved(p_user_id UUID)
 RETURNS NUMERIC(12,4)
 LANGUAGE sql
@@ -77,13 +78,13 @@ AS $$
     WHERE s.user_id = p_user_id;
 $$;
 
--- Rata-rata emisi opsi terbaik per trip.
+-- Rata-rata emisi opsi terpilih per trip.
 CREATE OR REPLACE FUNCTION fn_average_per_trip(p_user_id UUID)
 RETURNS NUMERIC(12,4)
 LANGUAGE sql
 STABLE
 AS $$
-    SELECT COALESCE(AVG(s.best_emission_kg), 0)::NUMERIC(12,4)
+    SELECT COALESCE(AVG(s.chosen_emission_kg), 0)::NUMERIC(12,4)
     FROM v_trip_summary s
     WHERE s.user_id = p_user_id;
 $$;
@@ -99,7 +100,7 @@ AS $$
     WHERE t.user_id = p_user_id;
 $$;
 
--- Moda terbaik yang paling sering dipakai. Mengembalikan 0 baris kalau kosong.
+-- Moda yang paling sering dipilih pengguna. Mengembalikan 0 baris kalau kosong.
 CREATE OR REPLACE FUNCTION fn_favorite_mode(p_user_id UUID)
 RETURNS TABLE (
     mode_id    UUID,
@@ -111,15 +112,15 @@ LANGUAGE sql
 STABLE
 AS $$
     SELECT
-        s.best_mode_id,
-        s.best_mode_name,
-        s.best_mode_icon,
+        s.chosen_mode_id,
+        s.chosen_mode_name,
+        s.chosen_mode_icon,
         COUNT(*)::BIGINT
     FROM v_trip_summary s
     WHERE s.user_id = p_user_id
-      AND s.best_mode_id IS NOT NULL
-    GROUP BY s.best_mode_id, s.best_mode_name, s.best_mode_icon
-    ORDER BY COUNT(*) DESC, s.best_mode_name ASC
+      AND s.chosen_mode_id IS NOT NULL
+    GROUP BY s.chosen_mode_id, s.chosen_mode_name, s.chosen_mode_icon
+    ORDER BY COUNT(*) DESC, s.chosen_mode_name ASC
     LIMIT 1;
 $$;
 
@@ -146,7 +147,7 @@ AS $$
     )
     SELECT
         d.day,
-        COALESCE(SUM(s.best_emission_kg), 0)::NUMERIC(12,4) AS total_kg
+        COALESCE(SUM(s.chosen_emission_kg), 0)::NUMERIC(12,4) AS total_kg
     FROM days d
     LEFT JOIN v_trip_summary s
            ON s.user_id = p_user_id
@@ -233,19 +234,25 @@ END;
 $$;
 
 -- Simpan satu trip beserta rute dan semua hasil emisi secara atomik.
+-- p_chosen_mode_id adalah moda yang benar-benar dipakai pengguna. Kalau null
+-- (mis. klien lama), function memakai hasil dengan emisi terendah.
 -- Contoh p_results:
 -- [
 --   {"transport_mode_id":"...", "total_emission_kg":2.1204,
 --    "emission_factor":0.171}
 -- ]
+DROP FUNCTION IF EXISTS fn_save_trip(UUID, TEXT, TEXT, NUMERIC, INTEGER, JSONB, TIMESTAMPTZ);
+DROP FUNCTION IF EXISTS fn_save_trip(UUID, TEXT, TEXT, NUMERIC, INTEGER, JSONB, TIMESTAMPTZ, UUID);
+
 CREATE OR REPLACE FUNCTION fn_save_trip(
-    p_user_id     UUID,
-    p_origin      TEXT,
-    p_destination TEXT,
-    p_distance_km NUMERIC,
-    p_duration    INTEGER,
-    p_results     JSONB,
-    p_date        TIMESTAMPTZ DEFAULT now()
+    p_user_id        UUID,
+    p_origin         TEXT,
+    p_destination    TEXT,
+    p_distance_km    NUMERIC,
+    p_duration       INTEGER,
+    p_results        JSONB,
+    p_date           TIMESTAMPTZ DEFAULT now(),
+    p_chosen_mode_id UUID DEFAULT NULL
 )
 RETURNS UUID
 LANGUAGE plpgsql
@@ -322,13 +329,27 @@ BEGIN
              COALESCE(v_item.emission_factor, v_factor));
     END LOOP;
 
-    -- Simpan mode terpilih: hasil dengan emisi terendah.
-    SELECT er.transport_mode_id
-    INTO v_chosen_mode_id
-    FROM emission_results er
-    WHERE er.trip_id = v_trip_id
-    ORDER BY er.total_emission_kg ASC, er.created_at ASC, er.emission_id ASC
-    LIMIT 1;
+    -- Simpan mode terpilih. Kalau pengguna tidak memilih (data lama/klien
+    -- lama), fallback ke hasil dengan emisi terendah.
+    IF p_chosen_mode_id IS NOT NULL THEN
+        IF NOT EXISTS (
+            SELECT 1
+            FROM emission_results er
+            WHERE er.trip_id = v_trip_id
+              AND er.transport_mode_id = p_chosen_mode_id
+        ) THEN
+            RAISE EXCEPTION 'Moda terpilih tidak ada dalam hasil emisi.';
+        END IF;
+
+        v_chosen_mode_id := p_chosen_mode_id;
+    ELSE
+        SELECT er.transport_mode_id
+        INTO v_chosen_mode_id
+        FROM emission_results er
+        WHERE er.trip_id = v_trip_id
+        ORDER BY er.total_emission_kg ASC, er.created_at ASC, er.emission_id ASC
+        LIMIT 1;
+    END IF;
 
     UPDATE trips
     SET chosen_mode_id = v_chosen_mode_id

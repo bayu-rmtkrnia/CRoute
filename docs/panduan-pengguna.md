@@ -111,12 +111,19 @@ Setelah perhitungan selesai, panel kanan menampilkan:
 - **Rekomendasi**: moda dengan emisi terkecil, beserta selisih terhadap mobil.
 - **Perbandingan emisi per moda (kg CO₂)**: batang horizontal untuk setiap
   moda. Moda dengan emisi terkecil diberi tanda **★ terbaik**.
+- **Pilihan moda**: klik tombol radio di baris moda yang **benar-benar kamu
+  gunakan**. Pilihan ini yang akan disimpan sebagai riwayat, bukan otomatis
+  moda terbaik.
 
 ### 5.3 Menyimpan ke riwayat
 
+- **Pilih satu moda** yang kamu gunakan. Tombol **Simpan ke riwayat** tetap
+  nonaktif sampai ada pilihan.
 - Klik **Simpan ke riwayat** untuk menyimpan perjalanan. Setelah tersimpan,
   tombol berubah menjadi **✓ Tersimpan di riwayat**, dan tombol **Lihat riwayat**
   muncul.
+- Moda yang dipilih dipakai untuk menghitung riwayat, statistik, dan target.
+  Rekomendasi terbaik tetap ditampilkan di Cek Rute sebagai saran.
 - Hasil yang **belum disimpan akan hilang** jika kamu pindah ke halaman lain.
 
 ### 5.4 Batasan saat ini ⚠️
@@ -172,9 +179,10 @@ Setelah perhitungan selesai, panel kanan menampilkan:
 
 ### 7.3 Ringkasan dan grafik
 
-- **Total hemat vs mobil**: total selisih emisi dibanding naik mobil.
+- **Total hemat vs mobil**: total selisih emisi dibanding naik mobil, dihitung
+  dari moda yang kamu pilih.
 - **Rata-rata per perjalanan**: rata-rata emisi (kg CO₂) per perjalanan.
-- **Moda favorit**: moda yang paling sering menjadi rekomendasi.
+- **Moda favorit**: moda yang paling sering kamu pilih.
 - **Emisi 7 hari terakhir**: grafik batang per hari, untuk tujuh hari terakhir.
 
 ## 8. Fitur yang belum tersedia

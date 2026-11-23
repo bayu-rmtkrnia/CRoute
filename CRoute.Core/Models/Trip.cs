@@ -23,11 +23,37 @@ public class Trip
     /// <summary>Hasil emisi per moda. Hanya bisa ditambah lewat <see cref="AddResult"/>.</summary>
     public IReadOnlyList<EmissionResult> Results => _results;
 
+    /// <summary>
+    /// Moda yang benar-benar dipakai pengguna untuk perjalanan ini. Nilainya
+    /// <c>null</c> untuk data lama atau sebelum pengguna memilih. Saat membaca
+    /// data lama, <see cref="GetChosenOption"/> memakai opsi terbaik sebagai
+    /// fallback supaya perilaku lama tidak berubah.
+    /// </summary>
+    public Guid? ChosenModeId { get; set; }
+
     public void AddResult(EmissionResult r)
     {
         ArgumentNullException.ThrowIfNull(r);
 
         _results.Add(r);
+    }
+
+    /// <summary>
+    /// Opsi yang dipilih pengguna. Kalau belum ada pilihan (data lama) atau
+    /// moda pilihan tidak ditemukan lagi, hasilnya fallback ke opsi terbaik.
+    /// </summary>
+    public EmissionResult? GetChosenOption()
+    {
+        if (ChosenModeId is Guid chosenModeId)
+        {
+            foreach (var result in _results)
+            {
+                if (result.Mode.Id == chosenModeId)
+                    return result;
+            }
+        }
+
+        return GetBestOption();
     }
 
     /// <summary>

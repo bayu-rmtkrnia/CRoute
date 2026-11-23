@@ -1,3 +1,4 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using CRoute.Core.Models;
 
 namespace CRoute.App.ViewModels;
@@ -11,7 +12,7 @@ public enum EmissionLevel
 }
 
 /// <summary>Satu batang di perbandingan emisi per moda (halaman Cari Rute).</summary>
-public class ModeComparisonRowViewModel
+public partial class ModeComparisonRowViewModel : ObservableObject
 {
     /// <param name="ratio">Emisi moda ini dibagi emisi tertinggi (0..1).</param>
     public ModeComparisonRowViewModel(EmissionResult result, bool isBest, double ratio, string? detail = null)
@@ -40,4 +41,8 @@ public class ModeComparisonRowViewModel
     public double Percent { get; }
 
     public EmissionLevel Level { get; }
+
+    /// <summary>True kalau pengguna memilih moda ini untuk disimpan sebagai perjalanan.</summary>
+    [ObservableProperty]
+    private bool _isSelected;
 }
