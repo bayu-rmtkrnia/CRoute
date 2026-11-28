@@ -24,7 +24,11 @@ namespace CRoute.Services;
 public class RouteService : IRouteService
 {
     /// <summary>Field yang diminta dari API; wajib diisi untuk Routes API.</summary>
-    private const string FieldMask = "routes.distanceMeters,routes.duration";
+    /// <remarks>
+    /// <c>routes.polyline.encodedPolyline</c> dipakai untuk menggambar garis
+    /// rute di peta Leaflet (CariRuteView).
+    /// </remarks>
+    private const string FieldMask = "routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline";
 
     private readonly HttpClient _httpClient;
     private readonly GoogleMapsSettings _settings;
@@ -201,12 +205,21 @@ public class RouteService : IRouteService
             ? ParseDurationSeconds(duration.GetString())
             : 0;
 
+        string? polyline =
+            first.TryGetProperty("polyline", out JsonElement poly) &&
+            poly.ValueKind == JsonValueKind.Object &&
+            poly.TryGetProperty("encodedPolyline", out JsonElement encoded) &&
+            encoded.ValueKind == JsonValueKind.String
+                ? encoded.GetString()
+                : null;
+
         return new Route
         {
             Origin = origin,
             Destination = destination,
             DistanceKm = meters / 1000.0,
             DurationMin = (int)Math.Round(seconds / 60.0, MidpointRounding.AwayFromZero),
+            EncodedPolyline = string.IsNullOrEmpty(polyline) ? null : polyline,
         };
     }
 

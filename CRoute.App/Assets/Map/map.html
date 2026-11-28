@@ -1,0 +1,97 @@
+<!doctype html>
+<!--
+  Peta rute CRoute (Leaflet + tile OpenStreetMap).
+  Dimuat oleh WebView2 di CariRuteView lewat host virtual https://croute.local/
+  (lihat Behaviors/RouteMapAssistant.cs). Data rute dikirim dari C# memakai
+  PostWebMessageAsJson: { polyline, origin, destination }.
+-->
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="leaflet.css">
+  <script src="leaflet.js"></script>
+  <style>
+    html, body, #map { margin: 0; height: 100%; background: #F7F9E8; }
+    body { font-family: "Segoe UI", sans-serif; }
+    #notice {
+      position: absolute; inset: 0; z-index: 1000;
+      display: none; align-items: center; justify-content: center;
+      background: #F7F9E8; color: #6B8573; font-size: 13px; text-align: center; padding: 16px;
+    }
+    .label { font-weight: 600; color: #1E3A2A; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div id="notice"></div>
+  <script>
+    // Decoder encoded polyline Google (presisi 1e5).
+    function decodePolyline(str) {
+      let index = 0, lat = 0, lng = 0;
+      const points = [];
+      while (index < str.length) {
+        for (const axis of [0, 1]) {
+          let shift = 0, result = 0, b;
+          do {
+            b = str.charCodeAt(index++) - 63;
+            result |= (b & 0x1f) << shift;
+            shift += 5;
+          } while (b >= 0x20);
+          const delta = (result & 1) ? ~(result >> 1) : (result >> 1);
+          if (axis === 0) lat += delta; else lng += delta;
+        }
+        points.push([lat / 1e5, lng / 1e5]);
+      }
+      return points;
+    }
+
+    const notice = document.getElementById('notice');
+    const map = L.map('map', { zoomControl: true }).setView([-7.7956, 110.3695], 13);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    const layer = L.layerGroup().addTo(map);
+
+    function showNotice(text) {
+      notice.textContent = text;
+      notice.style.display = text ? 'flex' : 'none';
+    }
+
+    function endpoint(latlng, text, color) {
+      return L.circleMarker(latlng, {
+        radius: 8, color: '#ffffff', weight: 3, fillColor: color, fillOpacity: 1
+      }).bindTooltip(text, { permanent: true, direction: 'top', offset: [0, -8], className: 'label' });
+    }
+
+    function showRoute(data) {
+      layer.clearLayers();
+      if (!data || !data.polyline) {
+        showNotice('Peta rute tidak tersedia (rute dari data contoh, bukan Google Maps).');
+        return;
+      }
+
+      const points = decodePolyline(data.polyline);
+      if (points.length === 0) {
+        showNotice('Peta rute tidak tersedia.');
+        return;
+      }
+
+      showNotice('');
+      const line = L.polyline(points, { color: '#2E7D5B', weight: 6, opacity: 0.9 }).addTo(layer);
+      endpoint(points[0], data.origin || 'Asal', '#1F4D3A').addTo(layer);
+      endpoint(points[points.length - 1], data.destination || 'Tujuan', '#C0392B').addTo(layer);
+
+      map.invalidateSize();
+      map.fitBounds(line.getBounds(), { padding: [36, 36] });
+    }
+
+    if (window.chrome && window.chrome.webview) {
+      window.chrome.webview.addEventListener('message', e => showRoute(e.data));
+    }
+    window.addEventListener('resize', () => map.invalidateSize());
+  </script>
+</body>
+</html>

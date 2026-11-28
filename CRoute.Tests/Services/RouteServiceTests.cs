@@ -71,7 +71,9 @@ public class RouteServiceTests
         Assert.Equal(HttpMethod.Post, request.Method);
         Assert.Equal("https://maps.test/directions/v2:computeRoutes", request.RequestUri!.ToString());
         Assert.Equal("test-key", request.Headers.GetValues("X-Goog-Api-Key").Single());
-        Assert.Equal("routes.distanceMeters,routes.duration", request.Headers.GetValues("X-Goog-FieldMask").Single());
+        Assert.Equal(
+            "routes.distanceMeters,routes.duration,routes.polyline.encodedPolyline",
+            request.Headers.GetValues("X-Goog-FieldMask").Single());
         // Key dikirim lewat header, bukan query string, supaya tidak ikut tercatat di log URL.
         Assert.DoesNotContain("test-key", request.RequestUri.ToString());
         Assert.Contains("\"origin\":{\"address\":\"Kampus\"}", handler.LastRequestBody);
@@ -99,6 +101,27 @@ public class RouteServiceTests
 
         Assert.Equal(0, route.DistanceKm);
         Assert.Equal(0, route.DurationMin);
+        Assert.Null(route.EncodedPolyline);
+    }
+
+    [Fact]
+    public async Task GetRouteAsync_AdaPolyline_DisimpanUntukPeta()
+    {
+        const string json = """
+            {
+              "routes": [
+                {
+                  "distanceMeters": 3683,
+                  "duration": "640s",
+                  "polyline": { "encodedPolyline": "_p~iF~ps|U_ulLnnqC_mqNvxq`@" }
+                }
+              ]
+            }
+            """;
+
+        Route route = await CreateService(json).GetRouteAsync("Malioboro", "UGM");
+
+        Assert.Equal("_p~iF~ps|U_ulLnnqC_mqNvxq`@", route.EncodedPolyline);
     }
 
     [Theory]

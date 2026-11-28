@@ -4,6 +4,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:CRoute.App.ViewModels"
+             xmlns:behaviors="clr-namespace:CRoute.App.Behaviors"
+             xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=vm:CariRuteViewModel}">
     <Grid>
@@ -66,7 +68,22 @@
             </ScrollViewer>
 
             <Grid Grid.Column="1">
-                <Border Style="{StaticResource Card}" Background="{StaticResource CreamBrush}"
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Peta rute (Leaflet + OpenStreetMap). Sengaja di luar ScrollViewer:
+                     WebView2 adalah HwndHost dan tidak ter-clip dengan benar di dalam
+                     ScrollViewer WPF. -->
+                <Border Grid.Row="0" Style="{StaticResource Card}" Padding="6" Margin="0,0,0,14"
+                        Visibility="{Binding HasResult, Converter={StaticResource BoolToVisibility}}">
+                    <wv2:WebView2 Height="250" DefaultBackgroundColor="#F7F9E8"
+                                  AutomationProperties.Name="Peta rute"
+                                  behaviors:RouteMapAssistant.Route="{Binding MapRoute}"/>
+                </Border>
+
+                <Border Grid.RowSpan="2" Style="{StaticResource Card}" Background="{StaticResource CreamBrush}"
                         Visibility="{Binding HasResult, Converter={StaticResource InverseBoolToVisibility}}">
                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                         <TextBlock Text="🗺️" FontSize="64" HorizontalAlignment="Center" Opacity="0.6"/>
@@ -78,7 +95,7 @@
                     </StackPanel>
                 </Border>
 
-                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto"
                               Visibility="{Binding HasResult, Converter={StaticResource BoolToVisibility}}">
                     <Border Style="{StaticResource Card}">
                         <StackPanel>

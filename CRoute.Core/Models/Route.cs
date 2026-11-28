@@ -65,4 +65,11 @@ public class Route
             _durationMin = value;
         }
     }
+
+    /// <summary>
+    /// Garis rute dalam format encoded polyline Google (presisi 5 digit).
+    /// Opsional: <c>null</c> kalau sumber rute tidak menyediakan geometri
+    /// (mis. FakeRouteService atau data riwayat lama), dan peta tidak digambar.
+    /// </summary>
+    public string? EncodedPolyline { get; set; }
 }

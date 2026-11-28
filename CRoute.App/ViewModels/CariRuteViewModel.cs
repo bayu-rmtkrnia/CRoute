@@ -75,6 +75,13 @@ public partial class CariRuteViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(ShowSelectionHint))]
     private bool _hasResult;
 
+    /// <summary>
+    /// Rute yang digambar di peta (lewat <c>RouteMapAssistant</c>). Peta hanya
+    /// menggambar garis kalau <see cref="Route.EncodedPolyline"/> terisi.
+    /// </summary>
+    [ObservableProperty]
+    private Route? _mapRoute;
+
     [ObservableProperty]
     private string _routeSummaryText = string.Empty;
 
@@ -213,6 +220,7 @@ public partial class CariRuteViewModel : ObservableObject
         double maxKg = trip.Results.Max(r => r.TotalEmissionKg);
         double saved = EmissionSavings.Calculate(route, best, _baseline);
 
+        MapRoute = route;
         RouteSummaryText = RouteFormatter.ToSummaryString(route);
         RouteDetailText = RouteFormatter.ToDetailString(route);
 
@@ -249,6 +257,7 @@ public partial class CariRuteViewModel : ObservableObject
         _pendingTrip = null;
         IsSaved = false;
         HasResult = false;
+        MapRoute = null;
         RouteSummaryText = string.Empty;
         RouteDetailText = string.Empty;
         RecommendationTitle = string.Empty;
